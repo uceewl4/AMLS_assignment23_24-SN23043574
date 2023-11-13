@@ -154,7 +154,9 @@ def zoom(img):
     # img = cv2.imread('Outputs/preprocessed_data/test0_1.png')
     h, w, c = img.shape
     imgZoom = cv2.resize(img,(int(0.5*w),int(0.5*h)),interpolation=cv2.INTER_CUBIC)
-    return imgZoom
+    keepSize = np.zeros((h,w,c),np.uint8)
+    keepSize[:int(0.5*h), :int(0.5*w), :] = imgZoom
+    return keepSize
 
 # horizontal flip
 def horizontalFlip(img):
