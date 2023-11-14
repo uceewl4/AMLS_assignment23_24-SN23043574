@@ -187,31 +187,31 @@ for index,f in enumerate(pre_file):
 def data_augmentation(length_1, length_0, pre_file_0, mode=None):
     imgs = []
 
-    flip_index = random.sample([i for i in range(length_0)],int((length_1-length_0+1)/5))
+    flip_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
     for i in flip_index:
         img = cv2.imread(os.path.join(path,f'{pre_file_0[i]}'))
         imgFlip = horizontalFlip(img)
         imgs.append(imgFlip)
 
-    shear_index = random.sample([i for i in range(length_0)],int((length_1-length_0+1)/5))
+    shear_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
     for i in shear_index:
         img = cv2.imread(os.path.join(path,f'{pre_file_0[i]}'))
         imgShear = shear(img)
         imgs.append(imgShear)
     
-    zoom_index = random.sample([i for i in range(length_0)],int((length_1-length_0+1)/5))
+    zoom_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
     for i in zoom_index:
         img = cv2.imread(os.path.join(path,f'{pre_file_0[i]}'))
         imgZoom = zoom(img)
         imgs.append(imgZoom)
     
-    shift_index = random.sample([i for i in range(length_0)],int((length_1-length_0+1)/5))
+    shift_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
     for i in shift_index:
         img = cv2.imread(os.path.join(path,f'{pre_file_0[i]}'))
         imgShift = shift(img)
         imgs.append(imgShift)
     
-    rot_index = random.sample([i for i in range(length_0)],int((length_1-length_0+1)/5))
+    rot_index = random.sample([i for i in range(length_0)],int((length_1-length_0-len(imgs))))
     for i in rot_index:
         img = cv2.imread(os.path.join(path,f'{pre_file_0[i]}'))
         imgRot = rotation(img)
@@ -227,7 +227,7 @@ new_train_length = data_augmentation(len(data['train_images'])-len(pre_file_trai
 new_test_length = data_augmentation(len(data['test_images'])-len(pre_file_test_0),len(pre_file_test_0), pre_file_test_0,mode="test")
 new_val_length = data_augmentation(len(data['val_images'])-len(pre_file_val_0),len(pre_file_val_0), pre_file_val_0,mode="val")
 
-# smote
+# #smote
 # path = 'Datasets/pneumoniamnist'
 # raw_file=os.listdir(path)
 # os.makedirs('Outputs/pneumoniamnist/smote_data', exist_ok=True)
@@ -264,9 +264,9 @@ new_val_length = data_augmentation(len(data['val_images'])-len(pre_file_val_0),l
 #             elif "val" in f:
 #                 pre_file_val.append(img)
 
-# # notice that the order of each dataset in npz and images is same
-# # gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-# # to sample the data, we can either use data augmentation or SMOTE algortihm, here try SMOTE as well to compare the performance
+# notice that the order of each dataset in npz and images is same
+# gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+# to sample the data, we can either use data augmentation or SMOTE algortihm, here try SMOTE as well to compare the performance
 
 # def data_smote(prefile, mode=None):
 #     smote=SMOTE(random_state=0)
@@ -275,8 +275,7 @@ new_val_length = data_augmentation(len(data['val_images'])-len(pre_file_val_0),l
 #     # experiments show that the smote data was appended after original data
 #     for index,i in enumerate(s_x[np.array(prefile).shape[0]:,:,:,:]):
 #         cv2.imwrite(os.path.join(path,f'{mode}{np.array(prefile).shape[0]+index}_0.png'),i)
-
-#     return np.array(prefile).shape[0]+len(s_y)
+#     return len(s_y)
 
 # new_train_length = data_smote(pre_file_train,mode="train")
 # new_test_length = data_smote(pre_file_test,mode="test")
