@@ -1,7 +1,6 @@
 import os
 import cv2
 import numpy as np
-import argparse
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from A.models.MLP import MLP as A_MLP
 from B.models.MLP import MLP as B_MLP
@@ -562,93 +561,13 @@ vgg_svm = DenseNet201()
 train(vgg_svm, Xtrain, ytrain)
 test(vgg_svm, Xtest, ytest)
 
-def load_data(task, path, method, batch_size=None):
-    file=os.listdir(path)
-    Xtest, ytest, Xtrain, ytrain, Xval, yval = [],[],[],[],[],[]
-       
-    for index,f in enumerate(file):
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            img = cv2.imread(os.path.join(path,f))
-            if task == "A" and method in ["SVM"]: # baselines
-                img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            if "test" in f:
-                Xtest.append(img)
-                ytest.append(f.split("_")[1][0])
-            elif "train" in f:
-                Xtrain.append(img)
-                ytrain.append(f.split("_")[1][0])
-            elif "val" in f:
-                Xval.append(img)
-                yval.append(f.split("_")[1][0])
 
-    if method in ["SVM"]: # baselines
-        if task == "A":
-            n,h,w = np.array(Xtrain).shape
-            Xtrain = np.array(Xtrain).reshape(n,h*w) # need to reshape gray picture into two-dimensional ones
-            Xval = np.array(Xval).reshape(len(Xval),h*w)
-            Xtest = np.array(Xtest).reshape(len(Xtest),h*w)
-        elif task == "B":
-            n,h,w,c = np.array(Xtrain).shape
-            Xtrain = np.array(Xtrain).reshape(n,h*w*c) # need to reshape gray picture into two-dimensional ones
-            Xval = np.array(Xval).reshape(len(Xval),h*w*c)
-            Xtest = np.array(Xtest).reshape(len(Xtest),h*w*c)
-        
-        return Xtrain,ytrain,Xval,yval,Xtest,ytest
-
-    elif method in ["VGG16_SVM", "VGG16"]:
-        n,h,w,c = np.array(Xtrain).shape
-        Xtrain = np.array(Xtrain)
-        Xval = np.array(Xval)
-        Xtest = np.array(Xtest)
-
-        if method in ["VGG16"]:
-            train_ds = tf.data.Dataset.from_tensor_slices(
-                (Xtrain, np.array(ytrain).astype(int))).batch(batch_size)
-            val_ds = tf.data.Dataset.from_tensor_slices((Xval, np.array(yval).astype(int))).batch(batch_size)
-            test_ds = tf.data.Dataset.from_tensor_slices((Xtest, np.array(ytest).astype(int))).batch(batch_size)
-            normalization_layer = layers.Rescaling(1./255)
-            train_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-            val_ds = val_ds.map(lambda x, y: (normalization_layer(x), y))
-            test_ds = test_ds.map(lambda x, y: (normalization_layer(x), y))
-            return train_ds, val_ds, test_ds
-        else:
-            return Xtrain,ytrain,Xval,yval,Xtest,ytest
 
 if __name__ == '__main__':
-
-    # argument processing
-    parser = argparse.ArgumentParser(description='Argparse')
-    parser.add_argument('--task','-n',type=str, default = "A",required=True,help="")
-    parser.add_argument('--method','-a',type=str, default="",help='age of the programmer')
-    # parser.add_argument('--sex','-s',type=str, default='male')
-    # parser.add_argument('--favorite','-f',type=str, nargs="+",required=False,help="favorite of the programmer")
-
-    args = parser.parse_args()
-    task = args.task
-    method = args.method
-    # print(args.method)
      
     # data processing (haven't decide how to present yet)
 
 
     # model selection
-    if task == "A":
-        path = 'Outputs/pneumoniamnist/preprocessed_data'
-    else:
-        path = 'Outputs/pathmnist/preprocessed_data'
-        
-    if method in ["SVM","VGG16_SVM"]:  # baselines
-        Xtrain, ytrain, Xtest, ytest, Xval, yval = load_data(task,path,method)
-    elif method in ["VGG16","MLP"]:
-        train_ds, val_ds, test_ds = load_data(task,path,method,batch_size=32)
 
     
-        
-
-        
-
-
-   
-

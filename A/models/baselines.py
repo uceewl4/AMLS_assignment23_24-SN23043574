@@ -65,8 +65,11 @@ class Baselines:
         print(f"Start testing for {self.method}")
         self.model.fit(np.concatenate((Xtrain,Xval),axis=0),ytrain+yval)
         pred_test = self.model.predict(Xtest)
-        pred_train = self.model.predict(Xtrain)
-        pred_val = self.model.predict(Xval)
+        # pred_train = self.model.predict(Xtrain)
+        # pred_val = self.model.predict(Xval)
+        pred_train = None
+        pred_val = None
+        
         print(f"Finish testing for {self.method}")
         
         return pred_train, pred_val, pred_test

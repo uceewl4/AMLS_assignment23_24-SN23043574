@@ -69,16 +69,16 @@ def gammaCorrection(imgPas):
     imgGamma = np.uint8(cv2.normalize(gamma, None, 0, 255, cv2.NORM_MINMAX))
     return imgGamma
 
-# for index,f in enumerate(raw_file):
-#         # print(os.path.join(path,f))
-#         if not os.path.isfile(os.path.join(path,f)):
-#             continue
-#         else:
-#             img, equ, cl = histogram_equalization(f)
-#             imgPas = sobel(equ)
-#             imgGamma = gammaCorrection(imgPas)
-#             # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-#             cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
+for index,f in enumerate(raw_file):
+        # print(os.path.join(path,f))
+        if not os.path.isfile(os.path.join(path,f)):
+            continue
+        else:
+            img, equ, cl = histogram_equalization(f)
+            imgPas = sobel(equ)
+            imgGamma = gammaCorrection(imgPas)
+            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+            cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
 
 
 # experiment 1: histogram equalization
@@ -341,81 +341,81 @@ def data_augmentation(clength, label, mode=None):
 
     return clength+len(imgs)
 
-# new_train_length = len(data["train_images"])
-# new_test_length = len(data["test_images"])
-# new_val_length = len(data["val_images"])
-# for i in range(9):
-#     new_train_length = data_augmentation(new_train_length,str(i),mode="train")
-#     new_test_length = data_augmentation(new_test_length,str(i), mode="test")
-#     new_val_length = data_augmentation(new_val_length, str(i), mode="val")
+new_train_length = len(data["train_images"])
+new_test_length = len(data["test_images"])
+new_val_length = len(data["val_images"])
+for i in range(9):
+    new_train_length = data_augmentation(new_train_length,str(i),mode="train")
+    new_test_length = data_augmentation(new_test_length,str(i), mode="test")
+    new_val_length = data_augmentation(new_val_length, str(i), mode="val")
 
-# smote
-path = 'Datasets/pathmnist'
-raw_file=os.listdir(path)
-os.makedirs('Outputs/pathmnist/smote_data', exist_ok=True)
-# print(file_list)   
+# # smote
+# path = 'Datasets/pathmnist'
+# raw_file=os.listdir(path)
+# os.makedirs('Outputs/pathmnist/smote_data', exist_ok=True)
+# # print(file_list)   
 
-for index,f in enumerate(raw_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            img, equ, cl = histogram_equalization(f)
-            imgPas = sobel(equ)
-            imgGamma = gammaCorrection(imgPas)
-            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-            cv2.imwrite(os.path.join('Outputs/pathmnist/smote_data',f'{f}'),imgGamma)
-
-
-path = 'Outputs/pathmnist/smote_data'
-pre_file=os.listdir(path)
-pre_file_test = []
-pre_file_train = []
-pre_file_val = []
+# for index,f in enumerate(raw_file):
+#         # print(os.path.join(path,f))
+#         if not os.path.isfile(os.path.join(path,f)):
+#             continue
+#         else:
+#             img, equ, cl = histogram_equalization(f)
+#             imgPas = sobel(equ)
+#             imgGamma = gammaCorrection(imgPas)
+#             # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+#             cv2.imwrite(os.path.join('Outputs/pathmnist/smote_data',f'{f}'),imgGamma)
 
 
-for index,f in enumerate(pre_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            img = cv2.imread(os.path.join(path,f))
-            if "test" in f:
-                pre_file_test.append(img)
-            elif "train" in f:
-                pre_file_train.append(img)
-            elif "val" in f:
-                pre_file_val.append(img)
-print(len(pre_file_train))
+# path = 'Outputs/pathmnist/smote_data'
+# pre_file=os.listdir(path)
+# pre_file_test = []
+# pre_file_train = []
+# pre_file_val = []
 
-# notice that the order of each dataset in npz and images is same
-# gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-# to sample the data, we can either use data augmentation or SMOTE algortihm, here try SMOTE as well to compare the performance
 
-def data_smote(prefile, mode=None):
-    smote=SMOTE(random_state=0)
-    print(np.array(prefile).reshape(np.array(prefile).shape[0], 28*28*3).shape)
-    print(data[f'{mode}_labels'].ravel().shape)
-    s_x, s_y=smote.fit_resample(np.array(prefile).reshape(np.array(prefile).shape[0], 28*28*3), data[f'{mode}_labels'].ravel())
-    s_x = s_x.reshape(s_x.shape[0], 28, 28, 3)
-    # experiments show that the smote data was appended after original data
-    count = []
-    for i in range(9):
-        count.append(np.count_nonzero(data[f'{mode}_labels'].flatten() == i))
-    pos = np.array(prefile).shape[0]
-    print(pos)
-    for label in range(9):
-        print(pos)
-        for index,i in enumerate(s_x[pos:pos+(max(count)-count[int(label)]),:,:,:]):
-            cv2.imwrite(os.path.join(path,f'{mode}{pos+index}_{label}.png'),i)
-        pos = pos+(max(count)-count[int(label)])
+# for index,f in enumerate(pre_file):
+#         # print(os.path.join(path,f))
+#         if not os.path.isfile(os.path.join(path,f)):
+#             continue
+#         else:
+#             img = cv2.imread(os.path.join(path,f))
+#             if "test" in f:
+#                 pre_file_test.append(img)
+#             elif "train" in f:
+#                 pre_file_train.append(img)
+#             elif "val" in f:
+#                 pre_file_val.append(img)
+# print(len(pre_file_train))
 
-    return len(s_y)
+# # notice that the order of each dataset in npz and images is same
+# # gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+# # to sample the data, we can either use data augmentation or SMOTE algortihm, here try SMOTE as well to compare the performance
 
-new_train_length = data_smote(pre_file_train,mode="train")
+# def data_smote(prefile, mode=None):
+#     smote=SMOTE(random_state=0)
+#     print(np.array(prefile).reshape(np.array(prefile).shape[0], 28*28*3).shape)
+#     print(data[f'{mode}_labels'].ravel().shape)
+#     s_x, s_y=smote.fit_resample(np.array(prefile).reshape(np.array(prefile).shape[0], 28*28*3), data[f'{mode}_labels'].ravel())
+#     s_x = s_x.reshape(s_x.shape[0], 28, 28, 3)
+#     # experiments show that the smote data was appended after original data
+#     count = []
+#     for i in range(9):
+#         count.append(np.count_nonzero(data[f'{mode}_labels'].flatten() == i))
+#     pos = np.array(prefile).shape[0]
+#     print(pos)
+#     for label in range(9):
+#         print(pos)
+#         for index,i in enumerate(s_x[pos:pos+(max(count)-count[int(label)]),:,:,:]):
+#             cv2.imwrite(os.path.join(path,f'{mode}{pos+index}_{label}.png'),i)
+#         pos = pos+(max(count)-count[int(label)])
+
+#     return len(s_y)
+
+# new_train_length = data_smote(pre_file_train,mode="train")
 # new_test_length = data_smote(pre_file_test,mode="test")
-new_val_length = data_smote(pre_file_val,mode="val")
+# new_val_length = data_smote(pre_file_val,mode="val")
 
 # I don't think smote is a good method to balance the dataset, because the result of smote
-# includes figures with lots of noise, it's not so clear also
+# includes figures with lots of noise, it's not so clear also, it also contains some strange color pixels
 

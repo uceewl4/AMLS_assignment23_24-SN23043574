@@ -40,10 +40,10 @@ class Baselines:
         self.model.fit(Xtrain, ytrain)  
         print(f"Finish training for {self.method}")
         
-        print(f"Start tuning(cross-validation) for {self.method}")
-        print(f"Finish tuning(cross-validation) for {self.method}")
+        
 
         if gridSearch:  
+            print(f"Start tuning(cross-validation) for {self.method}")
             if self.method == "KNN":
                 params = [{"k": [4, 6, 8, 10, 12, 14]}]
             if self.method == "DT":
@@ -57,6 +57,8 @@ class Baselines:
             grid.fit(np.concatenate((Xtrain,Xval),axis=0), ytrain+yval)
             print(grid.best_params_)
             self.model = grid.best_estimator_
+
+            print(f"Finish tuning(cross-validation) for {self.method}")
 
             return grid.cv_results
 
