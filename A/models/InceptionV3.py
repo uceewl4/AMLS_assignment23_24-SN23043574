@@ -5,12 +5,6 @@ from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
 from sklearn import svm
 from sklearn.metrics import accuracy_score
-from sklearn.tree import DecisionTreeClassifier
-import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D
-from tensorflow.keras import Model,models
-from sklearn import svm
-from sklearn.metrics import accuracy_score
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
@@ -25,10 +19,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-
-
 class InceptionV3(Model):
-  def __init__(self, method=None):
+  def __init__(self,method=None):
     super(InceptionV3, self).__init__()
     # self.flatten = Flatten(input_shape=(28, 28, 3))
     # self.d1 = Dense(128, activation='relu')
@@ -48,6 +40,7 @@ class InceptionV3(Model):
       self.base_model,
       tf.keras.layers.Flatten()]
     )
+
     if method == "InceptionV3_SVM":
       self.clf = svm.SVC(kernel='linear')
     elif method == "InceptionV3_LR":
@@ -74,9 +67,6 @@ class InceptionV3(Model):
       features = model.get_features(Xtrain)
       model.clf.fit(features, y_train)
       
-      
-
-
   def test(self,model, Xtest, ytest):
       test_features = model.get_features(Xtest)
       y_pred = model.clf.predict(test_features)

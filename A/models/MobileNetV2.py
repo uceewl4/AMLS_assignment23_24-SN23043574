@@ -2,8 +2,23 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model
 
+from sklearn.metrics import accuracy_score
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras import Model,models
+from sklearn import svm
+from sklearn import svm
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.impute import KNNImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+
 class MobileNetV2(Model):
-  def __init__(self):
+  def __init__(self, method=None):
     super(MobileNetV2, self).__init__()
     # self.flatten = Flatten(input_shape=(28, 28, 3))
     # self.d1 = Dense(128, activation='relu')
@@ -18,132 +33,44 @@ class MobileNetV2(Model):
                                                include_top=False,
                                                weights='imagenet')
     self.base_model.trainable = False
-    self.base_model.summary()
+    # self.base_model.summary()
 
-    self.global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
-    self.dropout = tf.keras.layers.Dropout(0.2)
-    self.prediction_layer1 = tf.keras.layers.Dense(128)
-    self.prediction_layer2 = tf.keras.layers.Dense(1)
+    self.model = models.Sequential([
+      self.data_augmentation,
+      self.base_model,
+      tf.keras.layers.Flatten()]
+    )
 
-  def call(self, x):
-    x = self.data_augmentation(x)
-    x = self.base_model(x, training=False)
-    x = self.global_average_layer(x)
-    x = self.dropout(x)
-    x = self.prediction_layer1(x)
+    if method == "MobileNetV2_SVM":
+      self.clf = svm.SVC(kernel='linear')
+    elif method == "MobileNetV2_LR":
+      self.clf = LogisticRegression(penalty="l1",solver="liblinear")
+    elif method == "MobileNetV2_KNN":  
+      self.clf = KNeighborsClassifier()
+    elif method == "MobileNetV2_DT":  
+      self.clf = DecisionTreeClassifier(criterion='entropy')
+    elif method == "MobileNetV2_NB": 
+      self.clf = GaussianNB()
+    elif method == "MobileNetV2_RF":  
+      self.clf = RandomForestClassifier(criterion='entropy')
+    elif method == "MobileNetV2_ABC":  
+      self.clf = AdaBoostClassifier()
 
-    return self.prediction_layer2(x)
+  def get_features(self, x):
+      features = self.model.predict(x)     
 
-
-def train(model, train_ds, val_ds, train_loss, train_accuracy, loss_object, optimizer, EPOCHS):
-    print("Start training")
-    #   for epoch in range(EPOCHS):
-    #     print(f"This is epoch {epoch}")
-    #     train_loss.reset_states()
-    #     train_accuracy.reset_states()
-    
-    #     for images, labels in train_ds:
-    #       with tf.GradientTape() as tape:
-    #         print(images.shape)
-    #         predictions = model(images, training=True)
-    #         # print(predictions)
-    #         # print(labels)
-    #         loss = loss_object(labels, predictions)
-
-    #     gradients = tape.gradient(loss, model.trainable_variables)
-    #     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    #     train_loss(loss)
-    #     train_accuracy(labels, predictions)
-    
-    #     print(
-    #     f'Epoch {epoch + 1}, '
-    #     f'Loss: {train_loss.result()}, '
-    #     f'Accuracy: {train_accuracy.result() * 100}, '
-    #   )
-
-    base_learning_rate = 0.000001
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-                loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                metrics=['accuracy'])
-
-    history = model.fit(train_ds,
-                    epochs=100,
-                    validation_data=val_ds)
-    
+      return features
 
 
-def test(model, loss_object, test_loss, test_accuracy, test_ds):
-#   test_loss.reset_states()
-#   test_accuracy.reset_states()
+  def train(self, model, Xtrain, y_train):
+      features = model.get_features(Xtrain)
+      model.clf.fit(features, y_train)
 
-#   for images, labels in test_ds:
-#     predictions = model(images, training=False)
-#     t_loss = loss_object(labels, predictions)
-
-#     test_loss(t_loss)
-#     test_accuracy(labels, predictions)
-    loss0, accuracy0 = model.evaluate(test_ds)
-
-#   print(
-#     f'Loss: {test_loss.result()}, '
-#     f'Test Accuracy: {test_accuracy.result() * 100}'
-#   )
-
-  
-# def train(model, train_ds, val_ds, train_loss, train_accuracy, loss_object, optimizer, EPOCHS):
-#     print("Start training")
-#     for epoch in range(EPOCHS):
-#         print(f"This is epoch {epoch}")
-#         train_loss.reset_states()
-#         train_accuracy.reset_states()
-    
-#         for images, labels in train_ds:
-#           with tf.GradientTape() as tape:
-#             # print(images.shape)
-#             predictions = model(images, training=True)
-#             # print(predictions)
-#             # print(labels)
-#             loss = loss_object(labels, predictions)
-
-#         gradients = tape.gradient(loss, model.trainable_variables)
-#         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-#         train_loss(loss)
-#         train_accuracy(labels, predictions)
-    
-#         print(
-#         f'Epoch {epoch + 1}, '
-#         f'Loss: {train_loss.result()}, '
-#         f'Accuracy: {train_accuracy.result() * 100}, '
-#       )
-
-#     # base_learning_rate = 0.0001
-#     # model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-#     #             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-#     #             metrics=['accuracy'])
-
-#     # history = model.fit(train_ds,
-#     #                 epochs=10,
-#     #                 validation_data=val_ds)
-    
-
-
-# def test(model, loss_object, test_loss, test_accuracy, test_ds):
-#   test_loss.reset_states()
-#   test_accuracy.reset_states()
-
-#   for images, labels in test_ds:
-#     predictions = model(images, training=False)
-#     t_loss = loss_object(labels, predictions)
-
-#     test_loss(t_loss)
-#     test_accuracy(labels, predictions)
-#     # loss0, accuracy0 = model.evaluate(test_ds)
-
-#   print(
-#     f'Loss: {test_loss.result()}, '
-#     f'Test Accuracy: {test_accuracy.result() * 100}'
-#   )
+      # 这里是否grid_search再考虑
+      
+  def test(self, model, Xtest, ytest):
+      test_features = model.get_features(Xtest)
+      y_pred = model.clf.predict(test_features)
+      print(accuracy_score(ytest,y_pred))
 
   

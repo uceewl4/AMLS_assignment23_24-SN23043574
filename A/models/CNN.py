@@ -17,6 +17,15 @@ class CNN(Model):
     self.fc = Flatten()
     self.d1 = Dense(64, activation='relu')
     self.d2 = Dense(1, name="outputs")
+
+    self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
+    self.optimizer = tf.keras.optimizers.Adam()
+
+    self.train_loss = tf.keras.metrics.Mean(name='train_loss')
+    self.train_accuracy = tf.keras.metrics.BinaryAccuracy(name='train_accuracy')
+
+    self.test_loss = tf.keras.metrics.Mean(name='test_loss')
+    self.test_accuracy = tf.keras.metrics.BinaryAccuracy(name='test_accuracy')
   
   def call(self, x):
     x = self.c1(x)
@@ -31,47 +40,47 @@ class CNN(Model):
     return self.d2(x)
 
 
-def train(model, train_ds, eval_ds, train_loss, train_accuracy, loss_object, optimizer, EPOCHS):
-  print("Start training")
-  for epoch in range(EPOCHS):
-    print(f"This is epoch {epoch}")
-    train_loss.reset_states()
-    train_accuracy.reset_states()
-  
-    for images, labels in train_ds:
-      with tf.GradientTape() as tape:
-        predictions = model(images, training=True)
-        # print(predictions)
-        # print(labels)
-        loss = loss_object(labels, predictions)
+  def train(self, model, train_ds, eval_ds, EPOCHS):
+    print("Start training")
+    for epoch in range(EPOCHS):
+      print(f"This is epoch {epoch}")
+      self.train_loss.reset_states()
+      self.train_accuracy.reset_states()
+    
+      for images, labels in train_ds:
+        with tf.GradientTape() as tape:
+          predictions = model(images, training=True)
+          # print(predictions)
+          # print(labels)
+          loss = self.loss_object(labels, predictions)
 
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+      gradients = tape.gradient(loss, model.trainable_variables)
+      self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-    train_loss(loss)
-    train_accuracy(labels, predictions)
-  
+      self.train_loss(loss)
+      self.train_accuracy(labels, predictions)
+    
+      print(
+      f'Epoch {epoch + 1}, '
+      f'Loss: {self.train_loss.result()}, '
+      f'Accuracy: {self.train_accuracy.result() * 100}, '
+    )
+
+
+  def test(self,model, test_ds):
+    self.test_loss.reset_states()
+    self.test_accuracy.reset_states()
+
+    for images, labels in test_ds:
+      predictions = model(images, training=False)
+      t_loss = self.loss_object(labels, predictions)
+
+      self.test_loss(t_loss)
+      self.test_accuracy(labels, predictions)
+
     print(
-    f'Epoch {epoch + 1}, '
-    f'Loss: {train_loss.result()}, '
-    f'Accuracy: {train_accuracy.result() * 100}, '
-  )
+      f'Loss: {self.test_loss.result()}, '
+      f'Test Accuracy: {self.test_accuracy.result() * 100}'
+    )
 
-
-def test(model, loss_object, test_loss, test_accuracy, test_ds):
-  test_loss.reset_states()
-  test_accuracy.reset_states()
-
-  for images, labels in test_ds:
-    predictions = model(images, training=False)
-    t_loss = loss_object(labels, predictions)
-
-    test_loss(t_loss)
-    test_accuracy(labels, predictions)
-
-  print(
-    f'Loss: {test_loss.result()}, '
-    f'Test Accuracy: {test_accuracy.result() * 100}'
-  )
-
-  
+    

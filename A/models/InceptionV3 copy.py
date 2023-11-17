@@ -1,13 +1,14 @@
 from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
 from sklearn import svm
 
 
-class VGG16_SVM(Model):
+class InceptionV3(Model):
   def __init__(self):
-    super(VGG16_SVM, self).__init__()
+    super(InceptionV3, self).__init__()
     # self.flatten = Flatten(input_shape=(28, 28, 3))
     # self.d1 = Dense(128, activation='relu')
     # # self.d2 = Dense(1, activation='sigmoid')
@@ -17,7 +18,7 @@ class VGG16_SVM(Model):
         tf.keras.layers.Resizing(32,32,interpolation='bilinear'),
         tf.keras.layers.Rescaling(1./255, input_shape=(32, 32, 3)),
     ])
-    self.base_model =tf.keras.applications.VGG16(include_top=False, weights='imagenet',
+    self.base_model =tf.keras.applications.InceptionV3(include_top=False, weights='imagenet',
                   input_shape=(32, 32, 3)) 
     self.base_model.trainable = False
     self.base_model.summary()
@@ -27,7 +28,8 @@ class VGG16_SVM(Model):
       tf.keras.layers.Flatten()]
     )
     # self.model = Model(inputs=self.base_model.input, outputs=self.model.get_layer('flatten').output) #想获取哪层的特征，就把引号里的内容改成那个层的名字就行
-    self.clf = svm.SVC(kernel='linear')
+    # self.clf = svm.SVC(kernel='linear')
+    self.clf = DecisionTreeClassifier(criterion='entropy')
 
   def get_features(self, x):
     features = self.model.predict(x)     

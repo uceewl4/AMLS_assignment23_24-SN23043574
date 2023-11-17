@@ -2,10 +2,12 @@
 # tree/decision boundary
 # cross validation average curve with different k
 # auc roc comparison
-
+import os
+import numpy as np
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 
 def visual4cm(true, pred):
@@ -48,3 +50,27 @@ def visual4cm(true, pred):
 #     plt.legend(loc="lower right", fontsize=5)
 #     plt.savefig(f"C:/FinalProject/outputs/{name}.png".format(name))
 #     plt.show()
+
+
+def get_metrics(y,pred):
+    result = {
+        "acc":round(accuracy_score(np.array(y).astype(int), pred.astype(int))*100,4),
+        "pre":round(precision_score(np.array(y).astype(int), pred.astype(int))*100,4),
+        "rec":round(recall_score(np.array(y).astype(int), pred.astype(int))*100,4),
+        "f1":round(f1_score(np.array(y).astype(int), pred.astype(int))*100,4)
+
+    }
+    return result
+
+
+def hyperpara_selection(method, scores):
+    # knn
+    plt.figure(figsize=(8, 5))
+    plt.plot(scores, c="g", marker='D', markersize=5)
+    plt.xlabel("Params")
+    plt.ylabel("Accuracy")
+    plt.title(f"Params for {method}")
+    if not os.path.exists("Outputs/images/hyperpara_selection/"):
+        os.makedirs("Outputs/images/hyperpara_selection/") 
+    plt.savefig(f'Outputs/images/hyperpara_selection/{method}.png')
+

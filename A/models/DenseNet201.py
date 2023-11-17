@@ -5,12 +5,6 @@ from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
 from sklearn import svm
 from sklearn.metrics import accuracy_score
-from sklearn.tree import DecisionTreeClassifier
-import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D
-from tensorflow.keras import Model,models
-from sklearn import svm
-from sklearn.metrics import accuracy_score
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
@@ -27,20 +21,20 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 
-class InceptionV3(Model):
+class DenseNet201(Model):
   def __init__(self, method=None):
-    super(InceptionV3, self).__init__()
+    super(DenseNet201, self).__init__()
     # self.flatten = Flatten(input_shape=(28, 28, 3))
     # self.d1 = Dense(128, activation='relu')
     # # self.d2 = Dense(1, activation='sigmoid')
     # self.d2 = Dense(9)
 
     self.data_augmentation = tf.keras.Sequential([
-        tf.keras.layers.Resizing(75,75,interpolation='bilinear'),
-        tf.keras.layers.Rescaling(1./255, input_shape=(75, 75, 3)),
+        tf.keras.layers.Resizing(32,32,interpolation='bilinear'),
+        tf.keras.layers.Rescaling(1./255, input_shape=(32, 32, 3)),
     ])
-    self.base_model =tf.keras.applications.InceptionV3(include_top=False, weights='imagenet',
-                  input_shape=(75, 75, 3)) 
+    self.base_model =tf.keras.applications.DenseNet201(include_top=False, weights='imagenet',
+                  input_shape=(32, 32, 3)) 
     self.base_model.trainable = False
     # self.base_model.summary()
     self.model =models.Sequential([
@@ -48,21 +42,21 @@ class InceptionV3(Model):
       self.base_model,
       tf.keras.layers.Flatten()]
     )
-    if method == "InceptionV3_SVM":
+    if method == "DenseNet201_SVM":
       self.clf = svm.SVC(kernel='linear')
-    elif method == "InceptionV3_LR":
+    elif method == "DenseNet201_LR":
       self.clf = LogisticRegression(penalty="l1",solver="liblinear")
-    elif method == "InceptionV3_KNN":  
+    elif method == "DenseNet201_KNN":  
       self.clf = KNeighborsClassifier()
-    elif method == "InceptionV3_DT":  
+    elif method == "DenseNet201_DT":  
       self.clf = DecisionTreeClassifier(criterion='entropy')
-    elif method == "InceptionV3_NB": 
+    elif method == "DenseNet201_NB": 
       self.clf = GaussianNB()
-    elif method == "InceptionV3_RF":  
+    elif method == "DenseNet201_RF":  
       self.clf = RandomForestClassifier(criterion='entropy')
-    elif method == "InceptionV3_ABC":  
+    elif method == "DenseNet201_ABC":  
       self.clf = AdaBoostClassifier()
-
+   
 
   def get_features(self, x):
     features = self.model.predict(x)     
@@ -73,9 +67,6 @@ class InceptionV3(Model):
   def train(self,model, Xtrain, y_train):
       features = model.get_features(Xtrain)
       model.clf.fit(features, y_train)
-      
-      
-
 
   def test(self,model, Xtest, ytest):
       test_features = model.get_features(Xtest)

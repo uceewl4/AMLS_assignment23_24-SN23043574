@@ -4,10 +4,29 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model,models
 from sklearn import svm
-
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras import Model,models
+from sklearn import svm
+from sklearn.metrics import accuracy_score
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras import Model,models
+from sklearn import svm
+from sklearn import svm
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.impute import KNNImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 class DenseNet201(Model):
-  def __init__(self):
+  def __init__(self, method=None):
     super(DenseNet201, self).__init__()
     # self.flatten = Flatten(input_shape=(28, 28, 3))
     # self.d1 = Dense(128, activation='relu')
@@ -21,15 +40,26 @@ class DenseNet201(Model):
     self.base_model =tf.keras.applications.DenseNet201(include_top=False, weights='imagenet',
                   input_shape=(32, 32, 3)) 
     self.base_model.trainable = False
-    self.base_model.summary()
+    # self.base_model.summary()
     self.model =models.Sequential([
       self.data_augmentation,
       self.base_model,
       tf.keras.layers.Flatten()]
     )
-    # self.model = Model(inputs=self.base_model.input, outputs=self.model.get_layer('flatten').output) #想获取哪层的特征，就把引号里的内容改成那个层的名字就行
-    # self.clf = svm.SVC(kernel='linear')
-    self.clf = DecisionTreeClassifier(criterion='entropy')
+    if method == "DenseNet201_SVM":
+      self.clf = svm.SVC(kernel='linear')
+    elif method == "DenseNet201_LR":
+      self.clf = LogisticRegression(penalty="l1",solver="liblinear")
+    elif method == "DenseNet201_KNN":  
+      self.clf = KNeighborsClassifier()
+    elif method == "DenseNet201_DT":  
+      self.clf = DecisionTreeClassifier(criterion='entropy')
+    elif method == "DenseNet201_NB": 
+      self.clf = GaussianNB()
+    elif method == "DenseNet201_RF":  
+      self.clf = RandomForestClassifier(criterion='entropy')
+    elif method == "DenseNet201_ABC":  
+      self.clf = AdaBoostClassifier()
 
   def get_features(self, x):
     features = self.model.predict(x)     
@@ -37,120 +67,12 @@ class DenseNet201(Model):
     return features
 
 
-def train(model, Xtrain, y_train):
-
-    #   for epoch in range(EPOCHS):
-    #     print(f"This is epoch {epoch}")
-    #     train_loss.reset_states()
-    #     train_accuracy.reset_states()
-    
-    #     for images, labels in train_ds:
-    #       with tf.GradientTape() as tape:
-    #         print(images.shape)
-    #         predictions = model(images, training=True)
-    #         # print(predictions)
-    #         # print(labels)
-    #         loss = loss_object(labels, predictions)
-
-    #     gradients = tape.gradient(loss, model.trainable_variables)
-    #     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    #     train_loss(loss)
-    #     train_accuracy(labels, predictions)
-    
-    #     print(
-    #     f'Epoch {epoch + 1}, '
-    #     f'Loss: {train_loss.result()}, '
-    #     f'Accuracy: {train_accuracy.result() * 100}, '
-    #   )
-
-    # base_learning_rate = 0.000001
-    # model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-    #             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    #             metrics=['accuracy'])
-
-    # history = model.predict(train_ds,
-    #                 epochs=100,
-    #                 validation_data=val_ds)
-    features = model.get_features(Xtrain)
-    model.clf.fit(features, y_train)
-    
-    
-
-
-def test(model, Xtest, ytest):
-#   test_loss.reset_states()
-#   test_accuracy.reset_states()
-
-#   for images, labels in test_ds:
-#     predictions = model(images, training=False)
-#     t_loss = loss_object(labels, predictions)
-
-#     test_loss(t_loss)
-#     test_accuracy(labels, predictions)
-    test_features = model.get_features(Xtest)
-    y_pred = model.clf.predict(test_features)
-    print(accuracy_score(ytest,y_pred))
-
-#   print(
-#     f'Loss: {test_loss.result()}, '
-#     f'Test Accuracy: {test_accuracy.result() * 100}'
-#   )
-
-  
-# def train(model, train_ds, val_ds, train_loss, train_accuracy, loss_object, optimizer, EPOCHS):
-#     print("Start training")
-#     for epoch in range(EPOCHS):
-#         print(f"This is epoch {epoch}")
-#         train_loss.reset_states()
-#         train_accuracy.reset_states()
-    
-#         for images, labels in train_ds:
-#           with tf.GradientTape() as tape:
-#             # print(images.shape)
-#             predictions = model(images, training=True)
-#             # print(predictions)
-#             # print(labels)
-#             loss = loss_object(labels, predictions)
-
-#         gradients = tape.gradient(loss, model.trainable_variables)
-#         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-#         train_loss(loss)
-#         train_accuracy(labels, predictions)
-    
-#         print(
-#         f'Epoch {epoch + 1}, '
-#         f'Loss: {train_loss.result()}, '
-#         f'Accuracy: {train_accuracy.result() * 100}, '
-#       )
-
-#     # base_learning_rate = 0.0001
-#     # model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
-#     #             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-#     #             metrics=['accuracy'])
-
-#     # history = model.fit(train_ds,
-#     #                 epochs=10,
-#     #                 validation_data=val_ds)
-    
-
-
-# def test(model, loss_object, test_loss, test_accuracy, test_ds):
-#   test_loss.reset_states()
-#   test_accuracy.reset_states()
-
-#   for images, labels in test_ds:
-#     predictions = model(images, training=False)
-#     t_loss = loss_object(labels, predictions)
-
-#     test_loss(t_loss)
-#     test_accuracy(labels, predictions)
-#     # loss0, accuracy0 = model.evaluate(test_ds)
-
-#   print(
-#     f'Loss: {test_loss.result()}, '
-#     f'Test Accuracy: {test_accuracy.result() * 100}'
-#   )
-
-  
+  def train(self, model, Xtrain, y_train):
+      features = model.get_features(Xtrain)
+      model.clf.fit(features, y_train)
+      
+      
+  def test(self, model, Xtest, ytest):
+      test_features = model.get_features(Xtest)
+      y_pred = model.clf.predict(test_features)
+      print(accuracy_score(ytest,y_pred))
