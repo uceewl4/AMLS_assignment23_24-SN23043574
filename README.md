@@ -6,3 +6,6 @@ a single VGG16 file for no classifier
 a VGG16 file with subsequent classifier
 first like this, if can integrate later than do
 
+
+
+95,96,79   batch_size 64 epoch 10

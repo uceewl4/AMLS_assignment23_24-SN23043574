@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 from tensorflow.keras import Model
+import numpy as np
 
 class CNN(Model):
   def __init__(self):
@@ -40,47 +41,98 @@ class CNN(Model):
     return self.d2(x)
 
 
-  def train(self, model, train_ds, eval_ds, EPOCHS):
-    print("Start training")
+  def train(self, model, train_ds, val_ds, EPOCHS):
+    print("Start training......")
     for epoch in range(EPOCHS):
-      print(f"This is epoch {epoch}")
+      train_pred = []
+      ytrain = []
       self.train_loss.reset_states()
       self.train_accuracy.reset_states()
+
     
-      for images, labels in train_ds:
+      for step,(train_images, train_labels) in enumerate(train_ds):
         with tf.GradientTape() as tape:
-          predictions = model(images, training=True)
-          # print(predictions)
-          # print(labels)
-          loss = self.loss_object(labels, predictions)
+          predictions = model(train_images, training=True)
+          train_prob = tf.nn.sigmoid(predictions)
+          for i in train_prob:
+            train_pred.append(1) if i >= 0.5 else train_pred.append(0)
+          ytrain += np.array(train_labels).tolist()
+          loss = self.loss_object(train_labels, predictions)
+        
+        gradients = tape.gradient(loss, model.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-      gradients = tape.gradient(loss, model.trainable_variables)
-      self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-      self.train_loss(loss)
-      self.train_accuracy(labels, predictions)
+        self.train_loss(loss)
+        self.train_accuracy(train_labels, predictions)
+      
+        if step % 50 == 0:  # evaluate
+          val_pred = []
+          yval = []
+          self.val_loss.reset_states()
+          self.val_accuracy.reset_states()
     
-      print(
-      f'Epoch {epoch + 1}, '
-      f'Loss: {self.train_loss.result()}, '
-      f'Accuracy: {self.train_accuracy.result() * 100}, '
-    )
+          for val_images,val_labels in val_ds:
+            with tf.GradientTape() as tape:
+              predictions = model(val_images, training=True)
+              val_prob = tf.nn.sigmoid(predictions)
+              for i in val_prob:
+                val_pred.append(1) if i >= 0.5 else val_pred.append(0)
+              yval += np.array(val_labels).tolist()
+              val_loss = self.loss_object(val_labels, predictions)
+            
+              self.val_loss(val_loss)
+              self.val_accuracy(val_labels, predictions)
+            
+            gradients = tape.gradient(val_loss, model.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+            self.val_loss(val_loss)
+            self.val_accuracy(val_labels, predictions)
+              
+          val_res = {
+            "val_loss": np.array(self.val_loss.result()).tolist(),
+            "val_acc": round(np.array(self.val_accuracy.result()) * 100,4),
+          }
+          print(f'Epoch: {epoch + 1}, Step: {step} ', val_res)
+
+      train_res = {
+            "train_loss": np.array(self.train_loss.result()).tolist(),
+            "train_acc": round(np.array(self.train_accuracy.result()) * 100,4),
+          }
+      print(f'Epoch: {epoch + 1}', train_res)
+
+      train_pred = np.array(train_pred)
+      val_pred = np.array(val_pred)
+
+    print("Finish training......")
+
+    return train_res, val_res, train_pred, val_pred, ytrain, yval
 
 
   def test(self,model, test_ds):
+    print("Start testing......")
+    test_pred = []
+    ytest = []
     self.test_loss.reset_states()
     self.test_accuracy.reset_states()
 
-    for images, labels in test_ds:
-      predictions = model(images, training=False)
-      t_loss = self.loss_object(labels, predictions)
+    for test_images, test_labels in test_ds:
+      predictions = model(test_images, training=False)
 
+      test_prob = tf.nn.sigmoid(predictions)
+      for i in test_prob:
+        test_pred.append(1) if i >= 0.5 else test_pred.append(0)
+      ytest += np.array(test_labels).tolist()
+
+      t_loss = self.loss_object(test_labels, predictions)
       self.test_loss(t_loss)
-      self.test_accuracy(labels, predictions)
+      self.test_accuracy(test_labels, predictions)
 
-    print(
-      f'Loss: {self.test_loss.result()}, '
-      f'Test Accuracy: {self.test_accuracy.result() * 100}'
-    )
-
+    test_res = {
+            "test_loss": np.array(self.test_loss.result()).tolist(),
+            "test_acc": round(np.array(self.test_accuracy.result()) * 100,4),
+          }
+    print("Finish testing......")
+    test_pred = np.array(test_pred)
     
+    return test_res, test_pred, ytest

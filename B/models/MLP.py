@@ -1,13 +1,13 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D
 from tensorflow.keras import Model
+import numpy as np
 
 class MLP(Model):
   def __init__(self):
     super(MLP, self).__init__()
     self.flatten = Flatten(input_shape=(28, 28, 3))
     self.d1 = Dense(128, activation='relu')
-    # self.d2 = Dense(1, activation='sigmoid')
     self.d2 = Dense(9)
 
     self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)  
@@ -15,22 +15,12 @@ class MLP(Model):
 
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
-    self.train_precision= tf.keras.metrics.Precision(name='train_precision')
-    self.train_recall = tf.keras.metrics.Recall(name='train_recall')
-    self.train_f1 = tf.keras.metrics.F1Score(name='train_f1')
-
-    self.eval_loss = tf.keras.metrics.Mean(name='eval_loss')
-    self.eval_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='eval_accuracy')
-    self.eval_precision= tf.keras.metrics.Precision(name='eval_precision')
-    self.eval_recall = tf.keras.metrics.Recall(name='eval_recall')
-    self.eval_f1 = tf.keras.metrics.F1Score(name='eval_f1')
-
+   
+    self.val_loss = tf.keras.metrics.Mean(name='eval_loss')
+    self.val_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='val_accuracy')
+  
     self.test_loss = tf.keras.metrics.Mean(name='test_loss')
     self.test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')
-    self.test_precision= tf.keras.metrics.Precision(name='test_precision')
-    self.test_recall = tf.keras.metrics.Recall(name='test_recall')
-    self.test_f1 = tf.keras.metrics.F1Score(name='test_f1')
-
 
   def call(self, x):
     x = self.flatten(x)
@@ -38,19 +28,22 @@ class MLP(Model):
     return self.d2(x)
 
 
-  def train(self, model, train_ds, eval_ds, EPOCHS):
+  def train(self, model, train_ds, val_ds, EPOCHS):
     print("Start training......")
     for epoch in range(EPOCHS):
+      train_pred = []
+      ytrain = []
       self.train_loss.reset_states()
       self.train_accuracy.reset_states()
-      self.train_precision.reset_states()
-      self.train_recall.reset_states()
-      self.train_f1.reset_states()
 
     
       for step,(train_images, train_labels) in enumerate(train_ds):
         with tf.GradientTape() as tape:
           predictions = model(train_images, training=True)
+          train_prob = tf.nn.softmax(predictions)
+          train_pred += np.argmax(train_prob,axis=1).tolist()
+         
+          ytrain += np.array(train_labels).tolist()
           loss = self.loss_object(train_labels, predictions)
         
         gradients = tape.gradient(loss, model.trainable_variables)
@@ -58,72 +51,74 @@ class MLP(Model):
 
         self.train_loss(loss)
         self.train_accuracy(train_labels, predictions)
-        
-        if step % 100 == 0:  # evaluate
-          self.eval_loss.reset_states()
-          self.eval_accuracy.reset_states()
+      
+        if step % 600 == 0:  # evaluate
+          val_pred = []
+          yval = []
+          self.val_loss.reset_states()
+          self.val_accuracy.reset_states()
     
-          for (eval_images,eval_labels) in enumerate(eval_ds):
+          for val_images,val_labels in val_ds:
             with tf.GradientTape() as tape:
-              predictions = model(eval_images, training=True)
-              eval_loss = self.loss_object(eval_labels, predictions)
+              predictions = model(val_images, training=True)
+              val_prob = tf.nn.softmax(predictions)
+              val_pred += np.argmax(val_prob,axis=1).tolist()
+              
+              yval += np.array(val_labels).tolist()
+              val_loss = self.loss_object(val_labels, predictions)
             
-              self.eval_loss(loss)
-              self.eval_accuracy(eval_labels, predictions)
+              self.val_loss(val_loss)
+              self.val_accuracy(val_labels, predictions)
             
-            gradients = tape.gradient(loss, model.trainable_variables)
+            gradients = tape.gradient(val_loss, model.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-            self.train_loss(loss)
-            self.train_accuracy(train_labels, predictions)
-          
-          eval_res = {
-            "eval_loss": {self.eval_loss.result()},
-            "eval_acc": round({self.eval_accuracy.result() * 100},4),
-            "eval_pre": round({self.eval_precision.result() * 100},4),
-            "eval_rec": round({self.eval_rec.result() * 100},4),
-            "eval_f1": round({self.eval_f1.result() * 100},4),
-
+            self.val_loss(val_loss)
+            self.val_accuracy(val_labels, predictions)
+              
+          val_res = {
+            "val_loss": np.array(self.val_loss.result()).tolist(),
+            "val_acc": round(np.array(self.val_accuracy.result()) * 100,4),
           }
-          print(f'Epoch: {epoch + 1}, Step: {step+1} ', eval_res)
+          print(f'Epoch: {epoch + 1}, Step: {step} ', val_res)
 
       train_res = {
-            "train_loss": {self.train__loss.result()},
-            "train_acc": round({self.train__accuracy.result() * 100},4),
-            "train_pre": round({self.train__precision.result() * 100},4),
-            "train_rec": round({self.train__rec.result() * 100},4),
-            "train_f1": round({self.train__f1.result() * 100},4),
-
+            "train_loss": np.array(self.train_loss.result()).tolist(),
+            "train_acc": round(np.array(self.train_accuracy.result()) * 100,4),
           }
-      print(f'Epoch: {epoch + 1}, Step: {step+1} ', train_res)
+      print(f'Epoch: {epoch + 1}', train_res)
 
-      print("Finish training......")
-    
-    return train_res.update(eval_res)
+      train_pred = np.array(train_pred)
+      val_pred = np.array(val_pred)
+
+    print("Finish training......")
+
+    return train_res, val_res, train_pred, val_pred, ytrain, yval
 
 
   def test(self,model, test_ds):
     print("Start testing......")
+    test_pred = []
+    ytest = []
     self.test_loss.reset_states()
     self.test_accuracy.reset_states()
 
-    for images, labels in test_ds:
-      predictions = model(images, training=False)
-      t_loss = self.loss_object(labels, predictions)
+    for test_images, test_labels in test_ds:
+      predictions = model(test_images, training=False)
 
+      test_prob = tf.nn.softmax(predictions)
+      test_pred += np.argmax(test_prob,axis=1).tolist()
+      ytest += np.array(test_labels).tolist()
+
+      t_loss = self.loss_object(test_labels, predictions)
       self.test_loss(t_loss)
-      self.test_accuracy(labels, predictions)
+      self.test_accuracy(test_labels, predictions)
 
     test_res = {
-            "test_loss": {self.test__loss.result()},
-            "test_acc": round({self.test__accuracy.result() * 100},4),
-            "test_pre": round({self.test__precision.result() * 100},4),
-            "test_rec": round({self.test__rec.result() * 100},4),
-            "test_f1": round({self.test__f1.result() * 100},4),
-
+            "test_loss": np.array(self.test_loss.result()).tolist(),
+            "test_acc": round(np.array(self.test_accuracy.result()) * 100,4),
           }
     print("Finish testing......")
+    test_pred = np.array(test_pred)
     
-    return test_res
-
-    
+    return test_res, test_pred, ytest

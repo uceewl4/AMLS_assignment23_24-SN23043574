@@ -14,8 +14,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--task","A",
-                    "--method","MLP"]
+            "args": ["--task","B",
+                    "--method","MLP",
+                    "--epochs","1"]
         }
     ]
 }

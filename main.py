@@ -150,24 +150,21 @@ if __name__ == '__main__':
         
         pred_train, pred_val, pred_test = model.test(Xtrain, ytrain, Xval, yval, Xtest)
 
-        res = {"train_res":get_metrics(ytrain, pred_train),
-               "val_res":get_metrics(yval, pred_val),
-               "test_res":get_metrics(ytest, pred_test)}
-        for i in res.items():
-            print(i)
-
     elif method in ["MLP","CNN"]:
-        res = model.train(model, train_ds, val_ds, args.epochs)
-        test_res = model.test(model, test_ds)
-        res.update(test_res)
-        for i in res:
-            print(i)
+        train_res, val_res, pred_train, pred_val, ytrain, yval = model.train(model, train_ds, val_ds, args.epochs)
+        test_res, pred_test, ytest = model.test(model, test_ds)
+       
     
     elif (("VGG16" in method) or ("ResNet50" in method) or ("DenseNet201" in method) \
         or ("MobileNetV2" in method) or ("InceptionV3" in method)):
         model.train(model, Xtrain, ytrain)
         model.test(model, Xtest, ytest)
-        
+    
+    res = {"train_res":get_metrics(task, ytrain, pred_train),
+               "val_res":get_metrics(task, yval, pred_val),
+               "test_res":get_metrics(task, ytest, pred_test)}
+    for i in res.items():
+        print(i)
 
     # visualization
     if method in ["KNN","DT","RF","ABC"]:

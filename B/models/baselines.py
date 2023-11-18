@@ -36,16 +36,14 @@ class Baselines:
         
     def train(self, Xtrain, ytrain, Xval, yval, gridSearch=False):
 
-        print(f"Start training for {self.method}")
+        print(f"Start training for {self.method}......")
         self.model.fit(Xtrain, ytrain)  
-        print(f"Finish training for {self.method}")
-        
-        
+        print(f"Finish training for {self.method}.")
 
         if gridSearch:  
-            print(f"Start tuning(cross-validation) for {self.method}")
+            print(f"Start tuning(cross-validation) for {self.method}......")
             if self.method == "KNN":
-                params = [{"k": [4, 6, 8, 10, 12, 14]}]
+                params = [{"n_neighbors": [i for i in range(1,30,2)]}]
             if self.method == "DT":
                 params = [{"max_leaf_nodes": [2, 5, 10, 15, 20]}]
             if self.method == "RF":
@@ -58,19 +56,19 @@ class Baselines:
             print(grid.best_params_)
             self.model = grid.best_estimator_
 
-            print(f"Finish tuning(cross-validation) for {self.method}")
+            print(f"Finish tuning(cross-validation) for {self.method}.")
 
             return grid.cv_results
 
 
     def test(self, Xtrain, ytrain, Xval, yval, Xtest):
 
-        print(f"Start testing for {self.method}")
+        print(f"Start testing for {self.method}......")
         self.model.fit(np.concatenate((Xtrain,Xval),axis=0),ytrain+yval)
         pred_test = self.model.predict(Xtest)
         pred_train = self.model.predict(Xtrain)
         pred_val = self.model.predict(Xval)
-        print(f"Finish testing for {self.method}")
+        print(f"Finish testing for {self.method}.")
         
         return pred_train, pred_val, pred_test
 

@@ -1,14 +1,20 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, Dropout
 from tensorflow.keras import Model
+import numpy as np
 
 class MLP(Model):
   def __init__(self):
     super(MLP, self).__init__()
-    self.flatten = Flatten(input_shape=(28, 28))
-    self.d1 = Dense(128, activation='relu')
-    # self.d2 = Dense(1, activation='sigmoid')  # 这里需要考量一下用sigmoid还是softmax
-    self.d2 = Dense(1)
+    self.flatten = Flatten(input_shape=(28, 28, 3))
+    self.d1 = Dense(4096, activation='relu')
+    self.d2 = Dense(4096, activation='relu')
+    self.do1 = Dropout(0.2)
+    self.d3 = Dense(1024, activation='relu')
+    self.d4 = Dense(256, activation='relu')
+    self.do2 = Dropout(0.2)
+    self.d5 = Dense(64, activation='relu')
+    self.d6 = Dense(1)
 
     self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
     self.optimizer = tf.keras.optimizers.Adam()
@@ -25,13 +31,21 @@ class MLP(Model):
   def call(self, x):
     x = self.flatten(x)
     x = self.d1(x)
-    return self.d2(x)
+    x = self.d2(x)
+    x = self.do1(x)
+    x = self.d3(x)
+    x = self.d4(x)
+    x = self.do2(x)
+    x = self.d5(x)
+   
+    return self.d6(x)
 
 
   def train(self, model, train_ds, val_ds, EPOCHS):
     print("Start training......")
     for epoch in range(EPOCHS):
       train_pred = []
+      ytrain = []
       self.train_loss.reset_states()
       self.train_accuracy.reset_states()
 
@@ -39,9 +53,10 @@ class MLP(Model):
       for step,(train_images, train_labels) in enumerate(train_ds):
         with tf.GradientTape() as tape:
           predictions = model(train_images, training=True)
-          prob = tf.nn.sigmoid(predictions)
-          
-          train_pred.append()
+          train_prob = tf.nn.sigmoid(predictions)
+          for i in train_prob:
+            train_pred.append(1) if i >= 0.5 else train_pred.append(0)
+          ytrain += np.array(train_labels).tolist()
           loss = self.loss_object(train_labels, predictions)
         
         gradients = tape.gradient(loss, model.trainable_variables)
@@ -50,13 +65,19 @@ class MLP(Model):
         self.train_loss(loss)
         self.train_accuracy(train_labels, predictions)
       
-        if step % 100 == 0:  # evaluate
+        if step % 50 == 0:  # evaluate
+          val_pred = []
+          yval = []
           self.val_loss.reset_states()
           self.val_accuracy.reset_states()
     
           for val_images,val_labels in val_ds:
             with tf.GradientTape() as tape:
               predictions = model(val_images, training=True)
+              val_prob = tf.nn.sigmoid(predictions)
+              for i in val_prob:
+                val_pred.append(1) if i >= 0.5 else val_pred.append(0)
+              yval += np.array(val_labels).tolist()
               val_loss = self.loss_object(val_labels, predictions)
             
               self.val_loss(val_loss)
@@ -69,48 +90,49 @@ class MLP(Model):
             self.val_accuracy(val_labels, predictions)
               
           val_res = {
-            "eval_loss": {self.val_loss.result()},
-            "eval_acc": round({self.val_accuracy.result() * 100},4),
+            "val_loss": np.array(self.val_loss.result()).tolist(),
+            "val_acc": round(np.array(self.val_accuracy.result()) * 100,4),
           }
-          print(f'Epoch: {epoch + 1}, Step: {step+1} ', val_res)
+          print(f'Epoch: {epoch + 1}, Step: {step} ', val_res)
 
-      for images, labels in test_ds:
-        predictions = model(images, training=False)
-        t_loss = self.loss_object(labels, predictions)
-
-        self.test_loss(t_loss)
-        self.test_accuracy(labels, predictions)
       train_res = {
-            "train_loss": {self.train_loss.result()},
-            "train_acc": round({self.train_accuracy.result() * 100},4),
+            "train_loss": np.array(self.train_loss.result()).tolist(),
+            "train_acc": round(np.array(self.train_accuracy.result()) * 100,4),
           }
-      print(f'Epoch: {epoch + 1}, Step: {step+1} ', train_res)
+      print(f'Epoch: {epoch + 1}', train_res)
 
-      print("Finish training......")
-    
-    return train_res.update(val_res)
+      train_pred = np.array(train_pred)
+      val_pred = np.array(val_pred)
+
+    print("Finish training......")
+
+    return train_res, val_res, train_pred, val_pred, ytrain, yval
 
 
   def test(self,model, test_ds):
     print("Start testing......")
+    test_pred = []
+    ytest = []
     self.test_loss.reset_states()
     self.test_accuracy.reset_states()
 
-    for images, labels in test_ds:
-      predictions = model(images, training=False)
-      t_loss = self.loss_object(labels, predictions)
+    for test_images, test_labels in test_ds:
+      predictions = model(test_images, training=False)
 
+      test_prob = tf.nn.sigmoid(predictions)
+      for i in test_prob:
+        test_pred.append(1) if i >= 0.5 else test_pred.append(0)
+      ytest += np.array(test_labels).tolist()
+
+      t_loss = self.loss_object(test_labels, predictions)
       self.test_loss(t_loss)
-      self.test_accuracy(labels, predictions)
+      self.test_accuracy(test_labels, predictions)
 
     test_res = {
-            "test_loss": {self.test_loss.result()},
-            "test_acc": round({self.test_accuracy.result() * 100},4),
-            "test_pre": round({self.test_precision.result() * 100},4),
-            "test_rec": round({self.test_recall.result() * 100},4),
-            "test_f1": round({self.test_f1.result() * 100},4),
-
+            "test_loss": np.array(self.test_loss.result()).tolist(),
+            "test_acc": round(np.array(self.test_accuracy.result()) * 100,4),
           }
     print("Finish testing......")
+    test_pred = np.array(test_pred)
     
-    return test_res
+    return test_res, test_pred, ytest

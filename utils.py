@@ -10,6 +10,7 @@ import seaborn as sns
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 
+
 def visual4cm(true, pred):
     """
     This function is used for visualizing confusion matrix for modelling experiments.
@@ -52,12 +53,13 @@ def visual4cm(true, pred):
 #     plt.show()
 
 
-def get_metrics(y,pred):
+def get_metrics(task, y,pred):
+    average = "binary" if task == "A" else "macro"
     result = {
         "acc":round(accuracy_score(np.array(y).astype(int), pred.astype(int))*100,4),
-        "pre":round(precision_score(np.array(y).astype(int), pred.astype(int))*100,4),
-        "rec":round(recall_score(np.array(y).astype(int), pred.astype(int))*100,4),
-        "f1":round(f1_score(np.array(y).astype(int), pred.astype(int))*100,4)
+        "pre":round(precision_score(np.array(y).astype(int), pred.astype(int), average=average)*100,4),
+        "rec":round(recall_score(np.array(y).astype(int), pred.astype(int),average=average)*100,4),
+        "f1":round(f1_score(np.array(y).astype(int), pred.astype(int),average=average)*100,4)
 
     }
     return result

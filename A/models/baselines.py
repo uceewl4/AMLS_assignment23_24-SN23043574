@@ -30,7 +30,7 @@ class Baselines:
         elif method == "NB": 
             self.model = MultinomialNB()
         elif method == "RF":  
-            self.model = RandomForestClassifier(criterion='entropy')
+            self.model = RandomForestClassifier(criterion='entropy',verbose=1)
         elif method == "ABC":  
             self.model = AdaBoostClassifier()
         
@@ -48,7 +48,7 @@ class Baselines:
             if self.method == "DT":
                 params = [{"max_leaf_nodes": [i for i in range(20,100,5)]}]
             if self.method == "RF":  # very slow need to notify TA
-                params = [{"n_estimators": [100, 120, 140, 160, 180], "max_depth": [4, 6, 8, 10, 12]}]
+                params = [{"n_estimators": [120, 140, 160, 180, 200], "max_depth": [8, 10, 12, 14, 16]}]
             if self.method == "ABC":
                 params = [{"n_estimators": [50, 75, 100, 125, 150, 175], "learning_rate": [0.001, 0.01, 0.1, 1]}]
             grid = GridSearchCV(self.model, params, cv=10, scoring="accuracy")
