@@ -9,3 +9,4 @@ first like this, if can integrate later than do
 
 
 95,96,79   batch_size 64 epoch 10
+96,97,85   batch_size 64 epoch 50

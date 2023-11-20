@@ -6,6 +6,7 @@ import cv2
 import os
 import random
 from imblearn.over_sampling import SMOTE
+from utils import visual4label
 
 # to download dataset in npz format from MeMNIST website, can use the sentence below
 # dataset1 = PneumoniaMNIST(split='train',download=True,root="Datasets/")
@@ -15,24 +16,25 @@ from imblearn.over_sampling import SMOTE
 # python -m medmnist save --flag=pathmnist --postfix=png --folder=Datasets/ --root=Datasets/
 # dataset2 = PathMNIST(split='train',download=True,root="Datasets/")
 
-# load the npz dataset and read it through numpy
-data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pneumoniamnist.npz')
-print(f"Train data length: {len(data['train_images'])}, label 0: {np.count_nonzero(data['train_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['train_labels'].flatten() == 1)}")
-print(f"Validation data length: {len(data['val_images'])}, label 0: {np.count_nonzero(data['val_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['val_labels'].flatten() == 1)}")                                                               
-print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
-# # print(data['train_images'][0:2,:,:])
-# # print(data['train_images'][0,:,:].shape)  # 28x28
+# use for individual data processing file
+# # load the npz dataset and read it through numpy
+# data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pneumoniamnist.npz')
+# print(f"Train data length: {len(data['train_images'])}, label 0: {np.count_nonzero(data['train_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['train_labels'].flatten() == 1)}")
+# print(f"Validation data length: {len(data['val_images'])}, label 0: {np.count_nonzero(data['val_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['val_labels'].flatten() == 1)}")                                                               
+# print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
+# # # print(data['train_images'][0:2,:,:])
+# # # print(data['train_images'][0,:,:].shape)  # 28x28
 
 
-# histogram equalization
-# there are two ways for histogram equalization, one is use traditional, second is use CLAHE where CLAHE can help avoid 
-# the loss of information due to over-brightness after histogram equalization, which is an adaptive histogram equalization.
-path = 'Datasets/pneumoniamnist'
-raw_file=os.listdir(path)
-os.makedirs('Outputs/pneumoniamnist/preprocessed_data', exist_ok=True)
-# print(file_list)   
+# # histogram equalization
+# # there are two ways for histogram equalization, one is use traditional, second is use CLAHE where CLAHE can help avoid 
+# # the loss of information due to over-brightness after histogram equalization, which is an adaptive histogram equalization.
+# path = 'Datasets/pneumoniamnist'
+# raw_file=os.listdir(path)
+# os.makedirs('Outputs/pneumoniamnist/preprocessed_data', exist_ok=True)
+# # print(file_list)   
 
-def histogram_equalization(f):
+def histogram_equalization(path, f):
     
     img = cv2.imread(os.path.join(path,f),0)
     equ = cv2.equalizeHist(img)
@@ -61,16 +63,17 @@ def gammaCorrection(imgPas):
     imgGamma = np.uint8(cv2.normalize(gamma, None, 0, 255, cv2.NORM_MINMAX))
     return imgGamma
 
-for index,f in enumerate(raw_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            img, equ, cl = histogram_equalization(f)
-            imgPas = sobel(equ)
-            imgGamma = gammaCorrection(imgPas)
-            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-            cv2.imwrite(os.path.join('Outputs/pneumoniamnist/preprocessed_data',f'{f}'),imgGamma)
+# use for individual data processing file
+# for index,f in enumerate(raw_file):
+#         # print(os.path.join(path,f))
+#         if not os.path.isfile(os.path.join(path,f)):
+#             continue
+#         else:
+#             img, equ, cl = histogram_equalization(f)
+#             imgPas = sobel(equ)
+#             imgGamma = gammaCorrection(imgPas)
+#             # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+#             cv2.imwrite(os.path.join('Outputs/pneumoniamnist/preprocessed_data',f'{f}'),imgGamma)
 
 
 # here I compare the performance for with or without each step of laplacian, sobel, gamma
@@ -164,27 +167,27 @@ def horizontalFlip(img):
     imgFlip = cv2.flip(img, 1) # 水平翻转
     return imgFlip
 
+# used for individual data processing file
+# path = 'Outputs/pneumoniamnist/preprocessed_data'
+# pre_file=os.listdir(path)
+# pre_file_test_0 = []
+# pre_file_train_0 = []
+# pre_file_val_0 = []
 
-path = 'Outputs/pneumoniamnist/preprocessed_data'
-pre_file=os.listdir(path)
-pre_file_test_0 = []
-pre_file_train_0 = []
-pre_file_val_0 = []
+# for index,f in enumerate(pre_file):
+#         # print(os.path.join(path,f))
+#         if not os.path.isfile(os.path.join(path,f)):
+#             continue
+#         else:
+#             if (f.split("_")[1][0] == "0"):
+#                 if "test" in f:
+#                     pre_file_test_0.append(f)
+#                 elif "train" in f:
+#                     pre_file_train_0.append(f)
+#                 elif "val" in f:
+#                     pre_file_val_0.append(f)
 
-for index,f in enumerate(pre_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            if (f.split("_")[1][0] == "0"):
-                if "test" in f:
-                    pre_file_test_0.append(f)
-                elif "train" in f:
-                    pre_file_train_0.append(f)
-                elif "val" in f:
-                    pre_file_val_0.append(f)
-
-def data_augmentation(length_1, length_0, pre_file_0, mode=None):
+def data_augmentation(path, length_1, length_0, pre_file_0, mode=None):
     imgs = []
 
     flip_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
@@ -222,10 +225,11 @@ def data_augmentation(length_1, length_0, pre_file_0, mode=None):
 
     return length_1+length_0+len(imgs)
 
-
-new_train_length = data_augmentation(len(data['train_images'])-len(pre_file_train_0),len(pre_file_train_0), pre_file_train_0,mode="train")
-new_test_length = data_augmentation(len(data['test_images'])-len(pre_file_test_0),len(pre_file_test_0), pre_file_test_0,mode="test")
-new_val_length = data_augmentation(len(data['val_images'])-len(pre_file_val_0),len(pre_file_val_0), pre_file_val_0,mode="val")
+# use for individual data preprocessing
+# path = 'Outputs/pneumoniamnist/preprocessed_data'
+# new_train_length = data_augmentation(path,len(data['train_images'])-len(pre_file_train_0),len(pre_file_train_0), pre_file_train_0,mode="train")
+# new_test_length = data_augmentation(path,len(data['test_images'])-len(pre_file_test_0),len(pre_file_test_0), pre_file_test_0,mode="test")
+# new_val_length = data_augmentation(path,len(data['val_images'])-len(pre_file_val_0),len(pre_file_val_0), pre_file_val_0,mode="val")
 
 # #smote
 # path = 'Datasets/pneumoniamnist'
@@ -289,3 +293,54 @@ new_val_length = data_augmentation(len(data['val_images'])-len(pre_file_val_0),l
 # shape of npz: 28x28x1
 # shape of images both before and after data preprocessing: 28x28x3
 # model may need to convert the images into gray, depends after
+
+# use for main.py
+def load_data_log4A():
+    data = np.load("Datasets/pneumoniamnist.npz")
+    print(f"Train data length: {len(data['train_images'])}, label 0: {np.count_nonzero(data['train_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['train_labels'].flatten() == 1)}")
+    print(f"Validation data length: {len(data['val_images'])}, label 0: {np.count_nonzero(data['val_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['val_labels'].flatten() == 1)}")                                                               
+    print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
+    visual4label("A",data)
+    return data
+
+def data_preprocess4A(raw_path):
+    print("Start preprocessing data......")
+    data = load_data_log4A()
+    raw_file=os.listdir(raw_path)
+    os.makedirs('Outputs/pneumoniamnist/preprocessed_data', exist_ok=True)
+    for index,f in enumerate(raw_file):
+        # print(os.path.join(path,f))
+        if not os.path.isfile(os.path.join(raw_path,f)):
+            continue
+        else:
+            img, equ, cl = histogram_equalization(raw_path, f)
+            imgPas = sobel(equ)
+            imgGamma = gammaCorrection(imgPas)
+            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+            cv2.imwrite(os.path.join('Outputs/pneumoniamnist/preprocessed_data',f'{f}'),imgGamma)
+
+    pre_path = 'Outputs/pneumoniamnist/preprocessed_data'
+    pre_file = os.listdir(pre_path)
+    pre_file_test_0 = []
+    pre_file_train_0 = []
+    pre_file_val_0 = []
+
+    for index,f in enumerate(pre_file):
+            # print(os.path.join(path,f))
+            if not os.path.isfile(os.path.join(pre_path,f)):
+                continue
+            else:
+                if (f.split("_")[1][0] == "0"):
+                    if "test" in f:
+                        pre_file_test_0.append(f)
+                    elif "train" in f:
+                        pre_file_train_0.append(f)
+                    elif "val" in f:
+                        pre_file_val_0.append(f)
+    
+    new_train_length = data_augmentation(pre_path,len(data['train_images'])-len(pre_file_train_0),len(pre_file_train_0), pre_file_train_0,mode="train")
+    new_test_length = data_augmentation(pre_path,len(data['test_images'])-len(pre_file_test_0),len(pre_file_test_0), pre_file_test_0,mode="test")
+    new_val_length = data_augmentation(pre_path, len(data['val_images'])-len(pre_file_val_0),len(pre_file_val_0), pre_file_val_0,mode="val")
+
+    print("Finish preprocessing data.")
+    return new_train_length, new_test_length, new_val_length

@@ -6,6 +6,7 @@ import os
 import random
 import cv2
 from imblearn.over_sampling import SMOTE
+from utils import visual4label
 
 # to download dataset in npz format from MeMNIST website, can use the sentence below
 # dataset1 = PneumoniaMNIST(split='train',download=True,root="Datasets/")
@@ -15,30 +16,31 @@ from imblearn.over_sampling import SMOTE
 # python -m medmnist save --flag=pathmnist --postfix=png --folder=Datasets/ --root=Datasets/
 # dataset2 = PathMNIST(split='train',download=True,root="Datasets/")
 
-# load the npz dataset and read it through numpy
-data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pathmnist.npz')
-print(f"Train data length: {len(data['train_images'])}")
-for i in range(9):
-    print(f"label {i}: {np.count_nonzero(data['train_labels'].flatten() == i)}")
-print(f"Validation data length: {len(data['val_images'])}")
-for i in range(9):
-    print(f"label {i}: {np.count_nonzero(data['val_labels'].flatten() == i)}")
-print(f"Test data length: {len(data['test_images'])}")
-for i in range(9):
-    print(f"label {i}: {np.count_nonzero(data['test_labels'].flatten() == i)}")
-print(data['train_images'][0:2,:,:])
-print(data['train_images'][0,:,:].shape)  # 28x28x3
+# # use for individual file for data preprocessing
+# # load the npz dataset and read it through numpy
+# data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pathmnist.npz')
+# print(f"Train data length: {len(data['train_images'])}")
+# for i in range(9):
+#     print(f"label {i}: {np.count_nonzero(data['train_labels'].flatten() == i)}")
+# print(f"Validation data length: {len(data['val_images'])}")
+# for i in range(9):
+#     print(f"label {i}: {np.count_nonzero(data['val_labels'].flatten() == i)}")
+# print(f"Test data length: {len(data['test_images'])}")
+# for i in range(9):
+#     print(f"label {i}: {np.count_nonzero(data['test_labels'].flatten() == i)}")
+# print(data['train_images'][0:2,:,:])
+# print(data['train_images'][0,:,:].shape)  # 28x28x3
 
 
+# # use for individual file for data preprocessing
+# # histogram equalization
+# # there are two ways for histogram equalization, one is use traditional, second is use CLAHE where CLAHE can help avoid 
+# # the loss of information due to over-brightness after histogram equalization, which is an adaptive histogram equalization.
+# path = 'Datasets/pathmnist'
+# raw_file=os.listdir(path)
+# os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True) 
 
-# histogram equalization
-# there are two ways for histogram equalization, one is use traditional, second is use CLAHE where CLAHE can help avoid 
-# the loss of information due to over-brightness after histogram equalization, which is an adaptive histogram equalization.
-path = 'Datasets/pathmnist'
-raw_file=os.listdir(path)
-os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True) 
-
-def histogram_equalization(f):
+def histogram_equalization(path,f):
     img = cv2.imread(os.path.join(path,f))
     equ = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
     equ[:, :, 2] = cv2.equalizeHist(equ[:, :, 2])
@@ -69,16 +71,17 @@ def gammaCorrection(imgPas):
     imgGamma = np.uint8(cv2.normalize(gamma, None, 0, 255, cv2.NORM_MINMAX))
     return imgGamma
 
-for index,f in enumerate(raw_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            img, equ, cl = histogram_equalization(f)
-            imgPas = sobel(equ)
-            imgGamma = gammaCorrection(imgPas)
-            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-            cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
+## use for individual file for data preprocessing
+# for index,f in enumerate(raw_file):
+#         # print(os.path.join(path,f))
+#         if not os.path.isfile(os.path.join(path,f)):
+#             continue
+#         else:
+#             img, equ, cl = histogram_equalization(f)
+#             imgPas = sobel(equ)
+#             imgGamma = gammaCorrection(imgPas)
+#             # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+#             cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
 
 
 # experiment 1: histogram equalization
@@ -277,16 +280,16 @@ def horizontalFlip(img):
     imgFlip = cv2.flip(img, 1) # 水平翻转
     return imgFlip
 
-
-path = 'Outputs/pathmnist/preprocessed_data'
-pre_file=os.listdir(path)
+## use for individual file for data preprocessing
+# path = 'Outputs/pathmnist/preprocessed_data'
+# pre_file=os.listdir(path)
 
 
 # # for each label class, augment the data into the number of the majority one 
 # # where each class will divide 5 include 5 all augmentation methods
 
 
-def data_augmentation(clength, label, mode=None):
+def data_augmentation(data, path, pre_file,clength, label, mode=None):
 
     pre_file_phase = []
 
@@ -341,13 +344,14 @@ def data_augmentation(clength, label, mode=None):
 
     return clength+len(imgs)
 
-new_train_length = len(data["train_images"])
-new_test_length = len(data["test_images"])
-new_val_length = len(data["val_images"])
-for i in range(9):
-    new_train_length = data_augmentation(new_train_length,str(i),mode="train")
-    new_test_length = data_augmentation(new_test_length,str(i), mode="test")
-    new_val_length = data_augmentation(new_val_length, str(i), mode="val")
+## use for individual file for data preprocessing
+# new_train_length = len(data["train_images"])
+# new_test_length = len(data["test_images"])
+# new_val_length = len(data["val_images"])
+# for i in range(9):
+#     new_train_length = data_augmentation(data, path, pre_file,new_train_length,str(i),mode="train")
+#     new_test_length = data_augmentation(data, path, pre_file,new_test_length,str(i), mode="test")
+#     new_val_length = data_augmentation(data, path, pre_file,new_val_length, str(i), mode="val")
 
 # # smote
 # path = 'Datasets/pathmnist'
@@ -419,3 +423,53 @@ for i in range(9):
 # I don't think smote is a good method to balance the dataset, because the result of smote
 # includes figures with lots of noise, it's not so clear also, it also contains some strange color pixels
 
+# use for main.py
+def load_data_log4B():
+    data = np.load('Datasets/pathmnist.npz')
+
+    train_label = {f"label {i}":np.count_nonzero(data['train_labels'].flatten() == i) for i in range(9)}
+    val_label = {f"label {i}":np.count_nonzero(data['val_labels'].flatten() == i) for i in range(9)}
+    test_label = {f"label {i}":np.count_nonzero(data['test_labels'].flatten() == i) for i in range(9)}
+
+    print(f"Train data length: {len(data['train_images'])}")
+    print(train_label)
+    print(f"Validation data length: {len(data['val_images'])}")
+    print(val_label)
+    print(f"Test data length: {len(data['test_images'])}")
+    print(test_label)
+    # print(data['train_images'][0:2,:,:])
+    # print(data['train_images'][0,:,:].shape)  # 28x28x3
+    visual4label("B",data)
+
+    return data
+
+def data_preprocess4B(raw_path):
+    print("Start preprocessing data......")
+    data = load_data_log4B()
+    raw_file=os.listdir(raw_path)
+    os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True)
+    for index,f in enumerate(raw_file):
+        # print(os.path.join(path,f))
+        if not os.path.isfile(os.path.join(raw_path,f)):
+            continue
+        else:
+            img, equ, cl = histogram_equalization(raw_path, f)
+            imgPas = sobel(equ)
+            imgGamma = gammaCorrection(imgPas)
+            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
+            cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
+
+    pre_path = 'Outputs/pathmnist/preprocessed_data'
+    pre_file=os.listdir(pre_path)
+
+    new_train_length = len(data["train_images"])
+    new_test_length = len(data["test_images"])
+    new_val_length = len(data["val_images"])
+    
+    for i in range(9):
+        new_train_length = data_augmentation(data, pre_path, pre_file,new_train_length,str(i),mode="train")
+        new_test_length = data_augmentation(data, pre_path, pre_file,new_test_length,str(i), mode="test")
+        new_val_length = data_augmentation(data, pre_path, pre_file,new_val_length, str(i), mode="val")
+
+    print("Finish preprocessing data.")
+    return new_train_length, new_test_length, new_val_length

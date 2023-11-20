@@ -2,9 +2,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
 from tensorflow.keras import Model
 import numpy as np
+import os
+from tensorboardX import SummaryWriter
 
 class CNN(Model):
-  def __init__(self):
+  def __init__(self, task, method):
     super(CNN, self).__init__()
     # different to MLP, no need to make the image input in a flattened way, can just input image with batches and calculate with kernel
     # but for MLP we need to first flatten the image because it's not a kernel calculation
@@ -25,8 +27,14 @@ class CNN(Model):
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.train_accuracy = tf.keras.metrics.BinaryAccuracy(name='train_accuracy')
 
+    self.val_loss = tf.keras.metrics.Mean(name='eval_loss')
+    self.val_accuracy = tf.keras.metrics.BinaryAccuracy(name='val_accuracy')
+
     self.test_loss = tf.keras.metrics.Mean(name='test_loss')
     self.test_accuracy = tf.keras.metrics.BinaryAccuracy(name='test_accuracy')
+
+    self.method = method
+    self.task = task
   
   def call(self, x):
     x = self.c1(x)
@@ -43,6 +51,9 @@ class CNN(Model):
 
   def train(self, model, train_ds, val_ds, EPOCHS):
     print("Start training......")
+    if not os.path.exists("Outputs/images/nn_curves/"):
+        os.makedirs("Outputs/images/nn_curves/") 
+    writer = SummaryWriter(f"Outputs/images/nn_curves/{self.method}_task{self.task}")
     for epoch in range(EPOCHS):
       train_pred = []
       ytrain = []
@@ -101,16 +112,22 @@ class CNN(Model):
           }
       print(f'Epoch: {epoch + 1}', train_res)
 
+      writer.add_scalars('loss',{"train_loss":np.array(self.train_loss.result()).tolist(), \
+                                            "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
+      writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
+                                            "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
+
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)
 
-    print("Finish training......")
+    print("Finish training.")
+    writer.close()
 
     return train_res, val_res, train_pred, val_pred, ytrain, yval
 
 
   def test(self,model, test_ds):
-    print("Start testing......")
+    print("Start testing.")
     test_pred = []
     ytest = []
     self.test_loss.reset_states()
@@ -132,7 +149,7 @@ class CNN(Model):
             "test_loss": np.array(self.test_loss.result()).tolist(),
             "test_acc": round(np.array(self.test_accuracy.result()) * 100,4),
           }
-    print("Finish testing......")
+    print("Finish testing.")
     test_pred = np.array(test_pred)
     
     return test_res, test_pred, ytest

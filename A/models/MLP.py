@@ -2,9 +2,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, Dropout
 from tensorflow.keras import Model
 import numpy as np
+import os
+from tensorboardX import SummaryWriter
 
 class MLP(Model):
-  def __init__(self):
+  def __init__(self, task,method):
     super(MLP, self).__init__()
     self.flatten = Flatten(input_shape=(28, 28, 3))
     self.d1 = Dense(4096, activation='relu')
@@ -28,6 +30,9 @@ class MLP(Model):
     self.test_loss = tf.keras.metrics.Mean(name='test_loss')
     self.test_accuracy = tf.keras.metrics.BinaryAccuracy(name='test_accuracy')
 
+    self.method = method
+    self.task = task
+
   def call(self, x):
     x = self.flatten(x)
     x = self.d1(x)
@@ -43,6 +48,10 @@ class MLP(Model):
 
   def train(self, model, train_ds, val_ds, EPOCHS):
     print("Start training......")
+    if not os.path.exists("Outputs/images/nn_curves/"):
+        os.makedirs("Outputs/images/nn_curves/") 
+    writer = SummaryWriter(f"Outputs/images/nn_curves/{self.method}_task{self.task}")
+  
     for epoch in range(EPOCHS):
       train_pred = []
       ytrain = []
@@ -100,11 +109,16 @@ class MLP(Model):
             "train_acc": round(np.array(self.train_accuracy.result()) * 100,4),
           }
       print(f'Epoch: {epoch + 1}', train_res)
+      writer.add_scalars('loss',{"train_loss":np.array(self.train_loss.result()).tolist(), \
+                                            "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
+      writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
+                                            "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
 
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)
 
-    print("Finish training......")
+    print("Finish training.")
+    writer.close()
 
     return train_res, val_res, train_pred, val_pred, ytrain, yval
 
@@ -132,7 +146,7 @@ class MLP(Model):
             "test_loss": np.array(self.test_loss.result()).tolist(),
             "test_acc": round(np.array(self.test_accuracy.result()) * 100,4),
           }
-    print("Finish testing......")
+    print("Finish testing.")
     test_pred = np.array(test_pred)
     
     return test_res, test_pred, ytest
