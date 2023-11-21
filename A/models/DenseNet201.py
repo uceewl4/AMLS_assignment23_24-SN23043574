@@ -50,7 +50,7 @@ class DenseNet201(Model):
     elif method == "DenseNet201_NB": 
       self.clf = GaussianNB()  
     elif method == "DenseNet201_RF":  
-      self.clf = RandomForestClassifier(criterion='entropy')
+      self.clf = RandomForestClassifier(criterion='entropy',verbose=2)
     elif method == "DenseNet201_ABC":  
       self.clf = AdaBoostClassifier()
    
