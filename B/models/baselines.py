@@ -10,6 +10,7 @@ from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.multiclass import OneVsRestClassifier
 
 
 class Baselines:
@@ -17,13 +18,13 @@ class Baselines:
     def __init__(self, method=None):
 
         self.method = method
-        if method == "LR":
-            pass
-            # self.model = LogisticRegression(penalty="l1",solver="liblinear")
+        if method == "LR":  
+            self.model = LogisticRegression(multi_class="ovr")  # 效果更好
+            # self.model = OneVsRestClassifier(LogisticRegression())
         elif method == "KNN":  
             self.model = KNeighborsClassifier()
         elif method == "SVM":
-            self.model = svm.SVC(kernel='linear')
+            self.model = OneVsRestClassifier(svm.SVC(kernel="rbf"))  # quick
         elif method == "DT":  
             self.model = DecisionTreeClassifier(criterion='entropy')
         elif method == "NB": 
@@ -58,7 +59,7 @@ class Baselines:
 
             print(f"Finish tuning(cross-validation) for {self.method}.")
 
-            return grid.cv_results
+            return grid.cv_results_
 
 
     def test(self, Xtrain, ytrain, Xval, yval, Xtest):

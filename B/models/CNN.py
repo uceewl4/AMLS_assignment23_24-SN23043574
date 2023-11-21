@@ -64,9 +64,22 @@ class CNN(Model):
       for step,(train_images, train_labels) in enumerate(train_ds):
         with tf.GradientTape() as tape:
           predictions = model(train_images, training=True)
-          train_prob = tf.nn.softmax(predictions)
-          train_pred += np.argmax(train_prob,axis=1).tolist()
-         
+          if self.multilabel == False:
+            train_prob = tf.nn.softmax(predictions) 
+            train_pred += np.argmax(train_prob,axis=1).tolist() 
+          else:
+            train_prob_multilabel = tf.nn.sigmoid(predictions)
+            train_prob = tf.nn.softmax(predictions) 
+
+            train_pred_multilabel = np.zeros_like(predictions)
+            train_pred_multilabel[train_prob_multilabel >= 0.6] = 1
+
+            tmp = np.argmax(train_prob,axis=1).tolist()
+            for index,(pred,label) in enumerate(zip(train_pred_multilabel,train_labels)):
+              if pred[int(label)] == 1:
+                tmp[index] = label
+            train_pred += tmp
+
           ytrain += np.array(train_labels).tolist()
           loss = self.loss_object(train_labels, predictions)
         
@@ -83,11 +96,25 @@ class CNN(Model):
           self.val_accuracy.reset_states()
     
           for val_images,val_labels in val_ds:
+
             with tf.GradientTape() as tape:
               predictions = model(val_images, training=True)
-              val_prob = tf.nn.softmax(predictions)
-              val_pred += np.argmax(val_prob,axis=1).tolist()
-              
+              if self.multilabel == False:
+                val_prob = tf.nn.softmax(predictions) 
+                val_pred += np.argmax(val_prob,axis=1).tolist() 
+              else:
+                val_prob_multilabel = tf.nn.sigmoid(predictions)
+                val_prob = tf.nn.softmax(predictions) 
+
+                val_pred_multilabel = np.zeros_like(predictions)
+                val_pred_multilabel[val_prob_multilabel >= 0.6] = 1  # threshold cannot be set to 0.5 considering the distribution
+
+                tmp = np.argmax(val_prob,axis=1).tolist()
+                for index,(pred,label) in enumerate(zip(val_pred_multilabel,val_labels)):
+                  if pred[int(label)] == 1:
+                    tmp[index] = label
+                val_pred += tmp
+
               yval += np.array(val_labels).tolist()
               val_loss = self.loss_object(val_labels, predictions)
             
@@ -116,7 +143,6 @@ class CNN(Model):
                                             "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
       writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
                                             "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
-      
 
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)
@@ -124,7 +150,10 @@ class CNN(Model):
     print("Finish training.")
     writer.close()
 
-    return train_res, val_res, train_pred, val_pred, ytrain, yval
+    if self.multilabel == False:
+      return train_res, val_res, train_pred, val_pred, ytrain, yval
+    else:
+      return train_res, val_res, train_pred, train_pred_multilabel, val_pred, val_pred_multilabel, ytrain, yval
 
 
   def test(self,model, test_ds):
@@ -137,8 +166,22 @@ class CNN(Model):
     for test_images, test_labels in test_ds:
       predictions = model(test_images, training=False)
 
-      test_prob = tf.nn.softmax(predictions)
-      test_pred += np.argmax(test_prob,axis=1).tolist()
+      if self.multilabel == False:
+        test_prob = tf.nn.softmax(predictions) 
+        test_pred += np.argmax(test_prob,axis=1).tolist() 
+      else:
+        test_prob_multilabel = tf.nn.sigmoid(predictions)
+        test_prob = tf.nn.softmax(predictions) 
+
+        test_pred_multilabel = np.zeros_like(predictions)
+        test_pred_multilabel[test_prob_multilabel >= 0.6] = 1
+
+        tmp = np.argmax(test_prob,axis=1).tolist()
+        for index,(pred,label) in enumerate(zip(test_pred_multilabel,test_labels)):
+          if pred[int(label)] == 1:
+            tmp[index] = label
+        test_pred += tmp
+      
       ytest += np.array(test_labels).tolist()
 
       t_loss = self.loss_object(test_labels, predictions)
@@ -152,4 +195,7 @@ class CNN(Model):
     print("Finish testing.")
     test_pred = np.array(test_pred)
     
-    return test_res, test_pred, ytest
+    if self.multilabel == False:
+      return test_res, test_pred, ytest
+    else:
+      return test_res, test_pred, test_pred_multilabel, ytest

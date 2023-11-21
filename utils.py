@@ -7,7 +7,7 @@ import tensorflow as tf
 import os
 import numpy as np
 from sklearn import tree
-from sklearn.metrics import confusion_matrix, roc_curve
+from sklearn.metrics import confusion_matrix, roc_curve, silhouette_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, ConfusionMatrixDisplay,auc
@@ -21,6 +21,7 @@ from A.models.MLP import MLP as A_MLP
 from A.models.MobileNetV2 import MobileNetV2 as A_MobileNetV2
 from A.models.ResNet50 import ResNet50 as A_ResNet50
 from A.models.VGG16 import VGG16 as A_VGG16
+from A.models.KMeans import KMeans as A_KMeans
 from B.models.baselines import Baselines as B_Baselines
 from B.models.CNN import CNN as B_CNN
 from B.models.DenseNet201 import DenseNet201 as B_DenseNet201
@@ -29,6 +30,11 @@ from B.models.MLP import MLP as B_MLP
 from B.models.MobileNetV2 import MobileNetV2 as B_MobileNetV2
 from B.models.ResNet50 import ResNet50 as B_ResNet50
 from B.models.VGG16 import VGG16 as B_VGG16
+from B.models.KMeans import KMeans as B_KMeans
+import random
+from sklearn.decomposition import PCA
+from tensorboardX import SummaryWriter
+
 
 def load_data(task, path, method, batch_size=None):
     file=os.listdir(path)
@@ -39,7 +45,7 @@ def load_data(task, path, method, batch_size=None):
             continue
         else:
             img = cv2.imread(os.path.join(path,f))
-            if task == "A" and method in ["LR","KNN","SVM","DT","NB","RF","ABC"]: 
+            if task == "A" and method in ["LR","KNN","SVM","DT","NB","RF","ABC","KMeans"]: 
                 img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
             if "test" in f:
                 Xtest.append(img)
@@ -51,7 +57,7 @@ def load_data(task, path, method, batch_size=None):
                 Xval.append(img)
                 yval.append(f.split("_")[1][0])
 
-    if method in ["LR","KNN","SVM","DT","NB","RF","ABC"]: # baselines
+    if method in ["LR","KNN","SVM","DT","NB","RF","ABC","KMeans"]: # baselines
         if task == "A":
             n,h,w = np.array(Xtrain).shape
             Xtrain = np.array(Xtrain).reshape(n,h*w) # need to reshape gray picture into two-dimensional ones
@@ -62,14 +68,47 @@ def load_data(task, path, method, batch_size=None):
             Xtrain = np.array(Xtrain).reshape(n,h*w*c) # need to reshape gray picture into two-dimensional ones
             Xval = np.array(Xval).reshape(len(Xval),h*w*c)
             Xtest = np.array(Xtest).reshape(len(Xtest),h*w*c)
+
+            # try sample for task B, the dataset is quite large
+            sample_index_train = random.sample([i for i in range(Xtrain.shape[0])],40000)
+            Xtrain = Xtrain[sample_index_train,:]
+            ytrain = np.array(ytrain)[sample_index_train].tolist()
+
+            sample_index_val = random.sample([i for i in range(Xval.shape[0])],5000)
+            Xval = Xval[sample_index_val,:]
+            yval = np.array(yval)[sample_index_val].tolist()
+
+            sample_index_test = random.sample([i for i in range(Xtest.shape[0])],7180)
+            Xtest = Xtest[sample_index_test,:]
+            ytest = np.array(ytest)[sample_index_test].tolist()
+
+            # too much features, use PCA to reduce dimensionality
+            pca = PCA(n_components=64)
+            Xtrain = pca.fit_transform(Xtrain)
+            Xval = pca.fit_transform(Xval)
+            Xtest = pca.fit_transform(Xtest)
         
-        return Xtrain,ytrain,Xval,yval,Xtest,ytest
+        return Xtrain,ytrain,Xtest,ytest,Xval,yval
 
     else:
         n,h,w,c = np.array(Xtrain).shape
         Xtrain = np.array(Xtrain)
         Xval = np.array(Xval)
         Xtest = np.array(Xtest)
+
+        if task == "B":
+            sample_index = random.sample([i for i in range(Xtrain.shape[0])],40000)  # 80000
+            Xtrain = Xtrain[sample_index,:,:,:]
+            ytrain = np.array(ytrain)[sample_index].tolist()
+
+            sample_index_val = random.sample([i for i in range(Xval.shape[0])],5000)  # 5000
+            Xval = Xval[sample_index_val,:]
+            yval = np.array(yval)[sample_index_val].tolist()
+
+            sample_index_test = random.sample([i for i in range(Xtest.shape[0])],7180)  # 7180
+            Xtest = Xtest[sample_index_test,:]
+            ytest = np.array(ytest)[sample_index_test].tolist()
+
 
         if method in ["CNN","MLP","EnsembleNet"]:
             train_ds = tf.data.Dataset.from_tensor_slices(
@@ -82,9 +121,9 @@ def load_data(task, path, method, batch_size=None):
             test_ds = test_ds.map(lambda x, y: (normalization_layer(x), y))
             return train_ds, val_ds, test_ds
         else:
-            return Xtrain,ytrain,Xval,yval,Xtest,ytest
+            return Xtrain,ytrain,Xtest,ytest,Xval,yval
 
-def load_model(task, method):
+def load_model(task, method, multilabel=False):
         if "CNN" in method:
             model = A_CNN(task,method) if task == "A" else B_CNN(task, method)
         elif "DenseNet201" in method:
@@ -92,7 +131,7 @@ def load_model(task, method):
         elif "InceptionV3" in method:
             model = A_InceptionV3(method) if task == "A" else B_InceptionV3(method)
         elif "MLP" in method:
-            model = A_MLP(task,method) if task == "A" else B_MLP(task, method)
+            model = A_MLP(task,method) if task == "A" else B_MLP(task, method, multilabel=multilabel)
         elif "MobileNetV2" in method:
             model = A_MobileNetV2(method) if task == "A" else B_MobileNetV2(method)
         elif "ResNet50" in method:
@@ -101,6 +140,8 @@ def load_model(task, method):
             model = A_VGG16(method) if task == "A" else B_VGG16(method)
         elif method == "EnsembleNet":
             model = A_EnsembleNet() if task == "A" else None
+        elif method == "KMeans":
+            model = A_KMeans() if task == "A" else B_KMeans()
         else:
             model = A_Baselines(method) if task == "A" else B_Baselines(method)
 
@@ -121,7 +162,7 @@ def visual4cm(task, method, ytrain, yval, ytest, train_pred, val_pred, test_pred
 
     for index,mode in enumerate(["train","val","test"]):
         disp = ConfusionMatrixDisplay(cms[mode],
-                                    display_labels=set(ytrain))
+                                    display_labels=sorted(list(set(ytrain))))
         disp.plot(ax=axes[index])
         disp.ax_.set_title(mode)
         disp.im_.colorbar.remove()
@@ -224,5 +265,44 @@ def visual4label(task, data):
         os.makedirs("Outputs/images/") 
     fig.savefig(f'Outputs/images/label_distribution_task{task}.png')
 
+
+def visual4KMeans(task,data):
+    fig = plt.figure(figsize=(24,10))
+    for index,mode in enumerate(["train","val","test"]):
+        ax = fig.add_subplot(2,3,index+1, projection='3d')
+        ax.scatter(data[f"{mode}"][0][:, 0:1],data[f"{mode}"][0][:, 1:2],data[f"{mode}"][0][:, 2:3], c=np.array(data[f"{mode}"][1]).astype(int),
+                cmap="jet", marker="o")
+        plt.title(f'{mode} data')
+        ax.set_xlabel('feature 1')
+        ax.set_ylabel('feature 2')
+        ax.set_zlabel('feature 3')
+
+        ax = fig.add_subplot(2,3,3+index+1, projection='3d')
+        score = silhouette_score(data[f"{mode}_clustering"][0],data[f"{mode}_clustering"][1])
+        ax.scatter(data[f"{mode}_clustering"][0][:, 0:1],data[f"{mode}_clustering"][0][:, 1:2],data[f"{mode}_clustering"][0][:, 2:3], c=np.array(data[f"{mode}_clustering"][1]).astype(int),
+                cmap="jet", marker="o", label=f"silhouette coefficient: {round(score,2)}")
+        plt.title(f'{mode} clustering')
+        ax.set_xlabel('feature 1')
+        ax.set_ylabel('feature 2')
+        ax.set_zlabel('feature 3')
+        ax.legend(loc='best')
+        
+    plt.tight_layout()
+    if not os.path.exists("Outputs/images/clustering"):
+        os.makedirs("Outputs/images/clustering") 
+    fig.savefig(f'Outputs/images/clustering/KMeans_task{task}.png')
+
+
+# def visual4NN(model,input):
+#     """
+#     This function is used for visualizing architecture of neural networks.
+#     :param model: the DL model to be visualized
+#     :param input: test case as input for model visualization
+#     """
+#     writer = SummaryWriter()
+#     writer.add_graph(model, input_to_model=input)
+#     writer.close()
+
+    
 
 
