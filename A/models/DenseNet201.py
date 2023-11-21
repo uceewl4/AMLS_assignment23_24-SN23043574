@@ -77,7 +77,7 @@ class DenseNet201(Model):
           if "DT" in self.method:
               params = [{"max_leaf_nodes": [i for i in range(20,65,5)]}]
           if "RF" in self.method:  # very slow need to notify TA
-              params = [{"n_estimators": [120, 140, 160, 180, 200], "max_depth": [8, 10, 12, 14, 16]}]
+              params = [{"n_estimators": [120, 140, 160, 180], "max_depth": [8, 10, 12, 14]}]
           if "ABC" in self.method:
               params = [{"n_estimators": [50, 75, 100, 125, 150, 175], "learning_rate": [0.001, 0.01, 0.1, 1]}]
           grid = GridSearchCV(model.clf, params, cv=10, scoring="accuracy")
