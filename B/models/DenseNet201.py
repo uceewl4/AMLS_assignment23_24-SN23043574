@@ -42,7 +42,7 @@ class DenseNet201(Model):
     if method == "DenseNet201_SVM":
       self.clf = svm.SVC(kernel='rbf')  
     elif method == "DenseNet201_LR":  
-      self.clf = LogisticRegression(penalty="l1",solver="liblinear")
+      self.clf = LogisticRegression(penalty="l1",solver="liblinear",multi_class="ovr")
     elif method == "DenseNet201_KNN":  
       self.clf = KNeighborsClassifier()
     elif method == "DenseNet201_DT":  

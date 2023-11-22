@@ -1,5 +1,5 @@
-from medmnist import PneumoniaMNIST
-from medmnist import PathMNIST
+# from medmnist import PneumoniaMNIST
+# from medmnist import PathMNIST
 import numpy as np
 import matplotlib.pyplot as plt
 import os

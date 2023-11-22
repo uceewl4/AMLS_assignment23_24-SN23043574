@@ -1,5 +1,6 @@
-from medmnist import PneumoniaMNIST
-from medmnist import PathMNIST
+
+# from medmnist import PneumoniaMNIST  # cannot be used on gpu but can be used on my cpu, maybe because of package version
+# from medmnist import PathMNIST
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2

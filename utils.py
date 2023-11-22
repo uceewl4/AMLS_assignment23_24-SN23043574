@@ -69,18 +69,18 @@ def load_data(task, path, method, batch_size=None):
             Xval = np.array(Xval).reshape(len(Xval),h*w*c)
             Xtest = np.array(Xtest).reshape(len(Xtest),h*w*c)
 
-            # try sample for task B, the dataset is quite large
-            sample_index_train = random.sample([i for i in range(Xtrain.shape[0])],40000)
-            Xtrain = Xtrain[sample_index_train,:]
-            ytrain = np.array(ytrain)[sample_index_train].tolist()
+            # # try sample for task B, the dataset is quite large
+            # sample_index_train = random.sample([i for i in range(Xtrain.shape[0])])  # 40000
+            # Xtrain = Xtrain[sample_index_train,:]
+            # ytrain = np.array(ytrain)[sample_index_train].tolist()
 
-            sample_index_val = random.sample([i for i in range(Xval.shape[0])],5000)
-            Xval = Xval[sample_index_val,:]
-            yval = np.array(yval)[sample_index_val].tolist()
+            # sample_index_val = random.sample([i for i in range(Xval.shape[0])])  # 5000
+            # Xval = Xval[sample_index_val,:]
+            # yval = np.array(yval)[sample_index_val].tolist()
 
-            sample_index_test = random.sample([i for i in range(Xtest.shape[0])],7180)
-            Xtest = Xtest[sample_index_test,:]
-            ytest = np.array(ytest)[sample_index_test].tolist()
+            # sample_index_test = random.sample([i for i in range(Xtest.shape[0])]) # 7180
+            # Xtest = Xtest[sample_index_test,:]
+            # ytest = np.array(ytest)[sample_index_test].tolist()
 
             # too much features, use PCA to reduce dimensionality
             pca = PCA(n_components=64)
