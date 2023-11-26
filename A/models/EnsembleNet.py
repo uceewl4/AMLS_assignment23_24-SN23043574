@@ -8,15 +8,13 @@ from A.models.CNN import CNN
 class EnsembleNet(Model):
   def __init__(self):
     super(EnsembleNet, self).__init__()
-    self.w1_model = MLP()
-    self.w2_model = CNN()
+    self.w1_model = MLP(task="A",method="MLP")
+    self.w2_model = CNN(task="A",method="MLP")
 
     self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.val_loss = tf.keras.metrics.Mean(name='teval_loss')
     self.test_loss = tf.keras.metrics.Mean(name='test_loss')
-   
-  
 
   def train(self, train_ds,val_ds, EPOCHS):
     self.w1_model.train(self.w1_model, train_ds, val_ds, EPOCHS)
@@ -43,13 +41,15 @@ class EnsembleNet(Model):
 
       loss_list.append(np.array(self.val_loss.result()).tolist())
     
-    self.weight = ratios[loss_list.index(max(loss_list))]
+    self.weight = ratios[loss_list.index(min(loss_list))]
 
     for train_images,train_labels in train_ds:
         w1_predictions = self.w1_model(train_images, training=False)
         w2_predictions = self.w2_model(train_images, training=False)
         total_predictions = tf.nn.softmax(self.weight*w1_predictions + (1-self.weight)*w2_predictions)
+        print(total_predictions)
         train_prob = tf.nn.sigmoid(total_predictions)
+        print(train_prob)
 
         for i in train_prob:
             train_pred.append(1) if i >= 0.5 else train_pred.append(0)

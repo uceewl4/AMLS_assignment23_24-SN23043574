@@ -70,15 +70,15 @@ def load_data(task, path, method, batch_size=None):
             Xtest = np.array(Xtest).reshape(len(Xtest),h*w*c)
 
             # # try sample for task B, the dataset is quite large
-            # sample_index_train = random.sample([i for i in range(Xtrain.shape[0])])  # 40000
+            # sample_index_train = random.sample([i for i in range(Xtrain.shape[0])])  
             # Xtrain = Xtrain[sample_index_train,:]
             # ytrain = np.array(ytrain)[sample_index_train].tolist()
 
-            # sample_index_val = random.sample([i for i in range(Xval.shape[0])])  # 5000
+            # sample_index_val = random.sample([i for i in range(Xval.shape[0])])  
             # Xval = Xval[sample_index_val,:]
             # yval = np.array(yval)[sample_index_val].tolist()
 
-            # sample_index_test = random.sample([i for i in range(Xtest.shape[0])]) # 7180
+            # sample_index_test = random.sample([i for i in range(Xtest.shape[0])]) 
             # Xtest = Xtest[sample_index_test,:]
             # ytest = np.array(ytest)[sample_index_test].tolist()
 
@@ -97,15 +97,15 @@ def load_data(task, path, method, batch_size=None):
         Xtest = np.array(Xtest)
 
         if task == "B":
-            sample_index = random.sample([i for i in range(Xtrain.shape[0])],40000)  # 80000
+            sample_index = random.sample([i for i in range(Xtrain.shape[0])],40000)  
             Xtrain = Xtrain[sample_index,:,:,:]
             ytrain = np.array(ytrain)[sample_index].tolist()
 
-            sample_index_val = random.sample([i for i in range(Xval.shape[0])],5000)  # 5000
+            sample_index_val = random.sample([i for i in range(Xval.shape[0])],5000)  
             Xval = Xval[sample_index_val,:]
             yval = np.array(yval)[sample_index_val].tolist()
 
-            sample_index_test = random.sample([i for i in range(Xtest.shape[0])],7180)  # 7180
+            sample_index_test = random.sample([i for i in range(Xtest.shape[0])],7180)  
             Xtest = Xtest[sample_index_test,:]
             ytest = np.array(ytest)[sample_index_test].tolist()
 
@@ -123,15 +123,15 @@ def load_data(task, path, method, batch_size=None):
         else:
             return Xtrain,ytrain,Xtest,ytest,Xval,yval
 
-def load_model(task, method, multilabel=False):
+def load_model(task, method, multilabel=False,lr=0.001):
         if "CNN" in method:
-            model = A_CNN(task,method) if task == "A" else B_CNN(task, method)
+            model = A_CNN(task,method,lr=lr) if task == "A" else B_CNN(task, method,multilabel=multilabel,lr=lr)
         elif "DenseNet201" in method:
             model = A_DenseNet201(method) if task == "A" else B_DenseNet201(method)
         elif "InceptionV3" in method:
             model = A_InceptionV3(method) if task == "A" else B_InceptionV3(method)
         elif "MLP" in method:
-            model = A_MLP(task,method) if task == "A" else B_MLP(task, method, multilabel=multilabel)
+            model = A_MLP(task,method,lr=lr) if task == "A" else B_MLP(task, method, multilabel=multilabel,lr=lr)
         elif "MobileNetV2" in method:
             model = A_MobileNetV2(method) if task == "A" else B_MobileNetV2(method)
         elif "ResNet50" in method:

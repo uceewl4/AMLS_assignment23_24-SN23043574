@@ -1,20 +1,30 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D
+from tensorflow.keras.layers import Dense, Flatten, Conv2D,Dropout
 from tensorflow.keras import Model
 import numpy as np
 import os
 from tensorboardX import SummaryWriter
 
 class MLP(Model):
-  def __init__(self, task, method, multilabel=False):
+  def __init__(self, task, method, multilabel=False,lr=0.001):
     super(MLP, self).__init__()
     self.multilabel = multilabel
     self.flatten = Flatten(input_shape=(28, 28, 3))
-    self.d1 = Dense(128, activation='relu')
-    self.d2 = Dense(9)
+    self.d1 = Dense(2048, activation='relu')
+    self.d2 = Dense(2048, activation='relu')
+    self.do1 = Dropout(0.4)
+    self.d3 = Dense(1024, activation='relu')
+    self.d4 = Dense(512, activation='relu')
+    self.do2 = Dropout(0.4)
+    self.d5 = Dense(256, activation='relu')
+    self.d6 = Dense(128, activation='relu')
+    self.do3 = Dropout(0.2)
+    self.d7 = Dense(64, activation='relu')
+    self.d8 = Dense(9)
 
     self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)  
-    self.optimizer = tf.keras.optimizers.Adam()
+    self.lr = lr
+    self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
 
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
@@ -31,7 +41,16 @@ class MLP(Model):
   def call(self, x):
     x = self.flatten(x)
     x = self.d1(x)
-    return self.d2(x)
+    x = self.d2(x)
+    x = self.do1(x)
+    x = self.d3(x)
+    x = self.d4(x)
+    x = self.do2(x)
+    x = self.d5(x)
+    x = self.d6(x)
+    x = self.do3(x)
+    x = self.d7(x)
+    return self.d8(x)
 
 
   def train(self, model, train_ds, val_ds, EPOCHS):
@@ -126,8 +145,8 @@ class MLP(Model):
 
       writer.add_scalars('loss',{"train_loss":np.array(self.train_loss.result()).tolist(), \
                                             "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
-      writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
-                                            "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
+      writer.add_scalars('accuracy',{"train_accuracy":np.array(self.train_accuracy.result()).tolist(), \
+                                            "val_accuracy": np.array(self.val_accuracy.result()).tolist()}, epoch)
 
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)

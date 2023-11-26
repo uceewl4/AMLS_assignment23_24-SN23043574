@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--method',type=str, default="", required=True,help='age of the programmer')
     parser.add_argument('--batch_size',type=int, default=32,help='age of the programmer')
     parser.add_argument('--epochs',type=int, default=10,help='age of the programmer')
+    parser.add_argument('--lr', type=float, default=0.001, help="preprocess the data or use the file provided")
     parser.add_argument('--pre_data', type=bool, default=False, help="preprocess the data or use the file provided")
     parser.add_argument('--multilabel', type=bool, default=False, help="preprocess the data or use the file provided")
     args = parser.parse_args()
@@ -77,7 +78,10 @@ if __name__ == '__main__':
     # model selection
     # didn't consider individual pre-trained currently
     print("Start loading model......")
-    model = load_model(task, method, args.multilabel)
+    if method in ["MLP","CNN"]:
+        model = load_model(task, method, args.multilabel,args.lr)
+    else:
+        model = load_model(task, method, args.multilabel)
     print("Load model successfully.")
     
     if method in ["LR","KNN","SVM","DT","NB","RF","ABC"]:  
@@ -134,12 +138,5 @@ if __name__ == '__main__':
             "val_clustering":(Xval, pred_val),
             "test_clustering":(Xtest, pred_test)}
         visual4KMeans(task, wrap_data)
-
-    # if method in ["MLP","CNN"]:
-    #     visual4NN(model,train_ds)
-    # if (("VGG16" in method) or ("ResNet50" in method) or ("DenseNet201" in method) \
-    #     or ("MobileNetV2" in method) or ("InceptionV3" in method)):
-    #     visual4NN(model.model, Xtrain)
-
    
 

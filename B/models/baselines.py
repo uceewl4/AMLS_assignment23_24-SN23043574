@@ -30,7 +30,7 @@ class Baselines:
         elif method == "NB": 
             self.model = GaussianNB()
         elif method == "RF":  
-            self.model = RandomForestClassifier(criterion='entropy')
+            self.model = RandomForestClassifier(criterion='entropy',verbose=2)
         elif method == "ABC":  
             self.model = AdaBoostClassifier()
         
@@ -44,13 +44,13 @@ class Baselines:
         if gridSearch:  
             print(f"Start tuning(cross-validation) for {self.method}......")
             if self.method == "KNN":
-                params = [{"n_neighbors": [i for i in range(1,30,2)]}]
+                params = [{"n_neighbors": [i for i in range(5,30,2)]}]
             if self.method == "DT":
                 params = [{"max_leaf_nodes": [2, 5, 10, 15, 20]}]
             if self.method == "RF":
-                params = [{"n_estimators": [100, 120, 140, 160, 180, 200], "max_depth": [4, 6, 8, 10, 12, 14]}]
+                params = [{"n_estimators": [100, 120, 140, 160], "max_depth": [4, 6, 8, 10]}]
             if self.method == "ABC":
-                params = [{"n_estimators": [50, 75, 100, 125, 150, 175], "learning_rate": [0.001, 0.01, 0.1, 1]}]
+                params = [{"n_estimators": [50, 75, 100, 125], "learning_rate": [0.001, 0.1, 1]}]
             grid = GridSearchCV(self.model, params, cv=10, scoring="accuracy")
 
             grid.fit(np.concatenate((Xtrain,Xval),axis=0), ytrain+yval)

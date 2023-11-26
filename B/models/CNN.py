@@ -1,28 +1,35 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Dropout, BatchNormalization
 from tensorflow.keras import Model
 import numpy as np
 import os
 from tensorboardX import SummaryWriter
 
 class CNN(Model):
-  def __init__(self, task, method):
+  def __init__(self, task, method,multilabel=False,lr=0.001):
     super(CNN, self).__init__()
     # different to MLP, no need to make the image input in a flattened way, can just input image with batches and calculate with kernel
     # but for MLP we need to first flatten the image because it's not a kernel calculation
-    self.c1 = Conv2D(16, 3, padding='same', activation='relu', input_shape=(28,28,3))
+    self.multilabel = multilabel
+    self.c1 = Conv2D(64, 5, padding='same', activation='relu', input_shape=(28,28,3))
+    self.b1 = BatchNormalization()
     self.p1 = MaxPooling2D()
-    self.c2 = Conv2D(32, 3, padding='same', activation='relu')
+    self.c2 = Conv2D(128, 2, padding='same', activation='relu')
+    self.b2 = BatchNormalization()
     self.p2 = MaxPooling2D()
-    self.c3 = Conv2D(64, 3, padding='same', activation='relu')
-    self.p3 = MaxPooling2D()
     self.dropout = Dropout(0.2)
+    self.c3 = Conv2D(128, 3, padding='same', activation='relu')
+    self.b3 = BatchNormalization()
+    self.p3 = MaxPooling2D()
+    self.dropout = Dropout(0.3)
     self.fc = Flatten()
-    self.d1 = Dense(128, activation='relu')
-    self.d2 = Dense(9, name="outputs")
+    self.d1 = Dense(256, activation='relu')
+    self.d2 = Dense(64, activation='relu')
+    self.d3 = Dense(9, name="outputs")
 
     self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)  
-    self.optimizer = tf.keras.optimizers.Adam()
+    self.lr = lr
+    self.optimizer = tf.keras.optimizers.Adam(learning_rate = lr)
 
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
@@ -38,15 +45,19 @@ class CNN(Model):
   
   def call(self, x):
     x = self.c1(x)
+    x = self.b1(x)
     x = self.p1(x)
     x = self.c2(x)
+    x = self.b2(x)
     x = self.p2(x)
     x = self.c3(x)
+    x = self.b3(x)
     x = self.p3(x)
     x = self.dropout(x)
     x = self.fc(x)
     x = self.d1(x)
-    return self.d2(x)
+    x = self.d2(x)
+    return self.d3(x)
 
 
   def train(self, model, train_ds, val_ds, EPOCHS):
@@ -141,8 +152,8 @@ class CNN(Model):
 
       writer.add_scalars('loss',{"train_loss":np.array(self.train_loss.result()).tolist(), \
                                             "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
-      writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
-                                            "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
+      writer.add_scalars('accuracy',{"train_accuracy":np.array(self.train_accuracy.result()).tolist(), \
+                                            "val_accuracy": np.array(self.val_accuracy.result()).tolist()}, epoch)
 
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)

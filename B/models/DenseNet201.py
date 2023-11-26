@@ -19,6 +19,7 @@ from sklearn.naive_bayes import GaussianNB,MultinomialNB,BernoulliNB,Categorical
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
+from sklearn.multiclass import OneVsRestClassifier
 
 
 
@@ -40,7 +41,7 @@ class DenseNet201(Model):
     )
     self.method = method
     if method == "DenseNet201_SVM":
-      self.clf = svm.SVC(kernel='rbf')  
+      self.clf = OneVsRestClassifier(svm.SVC(kernel="rbf"))  # quick
     elif method == "DenseNet201_LR":  
       self.clf = LogisticRegression(penalty="l1",solver="liblinear",multi_class="ovr")
     elif method == "DenseNet201_KNN":  
@@ -50,7 +51,7 @@ class DenseNet201(Model):
     elif method == "DenseNet201_NB": 
       self.clf = GaussianNB()  
     elif method == "DenseNet201_RF":  
-      self.clf = RandomForestClassifier(criterion='entropy')
+      self.clf = RandomForestClassifier(criterion='entropy',verbose=2)
     elif method == "DenseNet201_ABC":  
       self.clf = AdaBoostClassifier()
    
@@ -77,9 +78,9 @@ class DenseNet201(Model):
           if "DT" in self.method:
               params = [{"max_leaf_nodes": [i for i in range(20,65,5)]}]
           if "RF" in self.method:  # very slow need to notify TA
-              params = [{"n_estimators": [120, 140, 160, 180, 200], "max_depth": [8, 10, 12, 14, 16]}]
+              params = [{"n_estimators": [120, 140, 160, 180], "max_depth": [8, 10, 12, 14]}]
           if "ABC" in self.method:
-              params = [{"n_estimators": [50, 75, 100, 125, 150, 175], "learning_rate": [0.001, 0.01, 0.1, 1]}]
+              params = [{"n_estimators": [50, 75, 100, 125], "learning_rate": [0.001, 0.1, 1]}]
           grid = GridSearchCV(model.clf, params, cv=10, scoring="accuracy")
 
           grid.fit(self.tune_features, y_train+y_val)

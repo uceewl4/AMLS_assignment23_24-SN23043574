@@ -6,7 +6,7 @@ import os
 from tensorboardX import SummaryWriter
 
 class MLP(Model):
-  def __init__(self, task,method):
+  def __init__(self, task,method,lr=0.001):
     super(MLP, self).__init__()
     self.flatten = Flatten(input_shape=(28, 28, 3))
     self.d1 = Dense(4096, activation='relu')
@@ -19,7 +19,8 @@ class MLP(Model):
     self.d6 = Dense(1)
 
     self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
-    self.optimizer = tf.keras.optimizers.Adam()
+    self.lr = lr
+    self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr)
 
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
     self.train_accuracy = tf.keras.metrics.BinaryAccuracy(name='train_accuracy')
@@ -111,8 +112,8 @@ class MLP(Model):
       print(f'Epoch: {epoch + 1}', train_res)
       writer.add_scalars('loss',{"train_loss":np.array(self.train_loss.result()).tolist(), \
                                             "val_loss": np.array(self.val_loss.result()).tolist()}, epoch)
-      writer.add_scalars('accuracy',{"train_loss":np.array(self.train_accuracy.result()).tolist(), \
-                                            "val_loss": np.array(self.val_accuracy.result()).tolist()}, epoch)
+      writer.add_scalars('accuracy',{"train_accuracy":np.array(self.train_accuracy.result()).tolist(), \
+                                            "val_accuracy": np.array(self.val_accuracy.result()).tolist()}, epoch)
 
       train_pred = np.array(train_pred)
       val_pred = np.array(val_pred)
