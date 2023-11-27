@@ -1,3 +1,18 @@
+# -*- encoding: utf-8 -*-
+'''
+@File    :   main.py
+@Time    :   2023/11/27 11:12:08
+@Programme :  MSc Integrated Machine Learning Systems (TMSIMLSSYS01)
+@Module : ELEC0134 Applied Machine Learning Systems
+@Author  :   Wenrui Li
+@SN :   23043574
+@Contact :   uceewl4@ucl.ac.uk
+@Desc    :   None
+'''
+
+# here put the import lib
+
+
 import os
 import cv2
 import numpy as np

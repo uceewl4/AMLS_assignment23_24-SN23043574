@@ -9,7 +9,7 @@ class EnsembleNet(Model):
   def __init__(self):
     super(EnsembleNet, self).__init__()
     self.w1_model = MLP(task="A",method="MLP")
-    self.w2_model = CNN(task="A",method="MLP")
+    self.w2_model = CNN(task="A",method="CNN")
 
     self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
@@ -30,7 +30,8 @@ class EnsembleNet(Model):
       for val_images,val_labels in val_ds:
           w1_predictions = self.w1_model(val_images, training=False)
           w2_predictions = self.w2_model(val_images, training=False)
-          total_predictions = tf.nn.softmax(ratio*w1_predictions + (1-ratio)*w2_predictions)
+          # total_predictions = tf.nn.softmax(ratio*w1_predictions + (1-ratio)*w2_predictions)
+          total_predictions = ratio*w1_predictions + (1-ratio)*w2_predictions
           val_prob = tf.nn.sigmoid(total_predictions)
           for i in val_prob:
             val_pred.append(1) if i >= 0.5 else val_pred.append(0)
@@ -46,10 +47,10 @@ class EnsembleNet(Model):
     for train_images,train_labels in train_ds:
         w1_predictions = self.w1_model(train_images, training=False)
         w2_predictions = self.w2_model(train_images, training=False)
-        total_predictions = tf.nn.softmax(self.weight*w1_predictions + (1-self.weight)*w2_predictions)
-        print(total_predictions)
+        total_predictions = self.weight*w1_predictions + (1-self.weight)*w2_predictions
+        # print(total_predictions)
         train_prob = tf.nn.sigmoid(total_predictions)
-        print(train_prob)
+        # print(train_prob)
 
         for i in train_prob:
             train_pred.append(1) if i >= 0.5 else train_pred.append(0)
@@ -78,7 +79,7 @@ class EnsembleNet(Model):
     for test_images,test_labels in test_ds:
         w1_predictions = self.w1_model(test_images, training=False)
         w2_predictions = self.w2_model(test_images, training=False)
-        total_predictions = tf.nn.softmax(self.weight*w1_predictions + (1-self.weight)*w2_predictions)
+        total_predictions = self.weight*w1_predictions + (1-self.weight)*w2_predictions
         test_prob = tf.nn.sigmoid(total_predictions)
 
         for i in test_prob:

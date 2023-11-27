@@ -25,6 +25,7 @@ from A.models.KMeans import KMeans as A_KMeans
 from B.models.baselines import Baselines as B_Baselines
 from B.models.CNN import CNN as B_CNN
 from B.models.DenseNet201 import DenseNet201 as B_DenseNet201
+from B.models.EnsembleNet import EnsembleNet as B_EnsembleNet
 from B.models.InceptionV3 import InceptionV3 as B_InceptionV3
 from B.models.MLP import MLP as B_MLP
 from B.models.MobileNetV2 import MobileNetV2 as B_MobileNetV2
@@ -139,7 +140,7 @@ def load_model(task, method, multilabel=False,lr=0.001):
         elif "VGG16" in method:
             model = A_VGG16(method) if task == "A" else B_VGG16(method)
         elif method == "EnsembleNet":
-            model = A_EnsembleNet() if task == "A" else None
+            model = A_EnsembleNet() if task == "A" else B_EnsembleNet()
         elif method == "KMeans":
             model = A_KMeans() if task == "A" else B_KMeans()
         else:
