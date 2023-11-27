@@ -140,7 +140,7 @@ def load_model(task, method, multilabel=False,lr=0.001):
         elif "VGG16" in method:
             model = A_VGG16(method) if task == "A" else B_VGG16(method)
         elif method == "EnsembleNet":
-            model = A_EnsembleNet() if task == "A" else B_EnsembleNet()
+            model = A_EnsembleNet(lr=lr) if task == "A" else B_EnsembleNet(lr=lr)
         elif method == "KMeans":
             model = A_KMeans() if task == "A" else B_KMeans()
         else:

@@ -6,10 +6,11 @@ from A.models.MLP import MLP
 from A.models.CNN import CNN
 
 class EnsembleNet(Model):
-  def __init__(self):
+  def __init__(self,lr):
     super(EnsembleNet, self).__init__()
-    self.w1_model = MLP(task="A",method="MLP")
-    self.w2_model = CNN(task="A",method="CNN")
+    self.lr = lr
+    self.w1_model = MLP(task="A",method="MLP",lr=lr)
+    self.w2_model = CNN(task="A",method="CNN",lr=lr)
 
     self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)  
     self.train_loss = tf.keras.metrics.Mean(name='train_loss')
@@ -92,6 +93,7 @@ class EnsembleNet(Model):
             "test_loss": np.array(self.test_loss.result()).tolist(),
     }
     print("Finish testing.")
+    print(f"The best ratio for EnsembleNet is {self.weight}.")
     test_pred = np.array(test_pred)
     
     return test_res, test_pred, ytest

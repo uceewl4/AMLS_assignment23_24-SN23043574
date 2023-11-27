@@ -34,8 +34,8 @@ warnings.filterwarnings("ignore")
 # # print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
 # # Generally the ratio of train:val:test should be 3:1:1, here first use the dataset and no need for train test split
 
+# os.environ['CUDA_VISIBLE_DEVICES']='0'
 # export CUDA_VISIBLE_DEVICES=1
-os.environ['CUDA_VISIBLE_DEVICES']='0'
 # 8.9.6, 12.0.1
 if tf.config.list_physical_devices('GPU'):
     print('Use GPU of UCL server: london.ee.ucl.ac.uk')
@@ -93,10 +93,10 @@ if __name__ == '__main__':
     # model selection
     # didn't consider individual pre-trained currently
     print("Start loading model......")
-    if method in ["MLP","CNN"]:
+    if method in ["MLP","CNN","EnsembleNet"]:
         model = load_model(task, method, args.multilabel,args.lr)
     else:
-        model = load_model(task, method, args.multilabel)
+        model = load_model(task, method)
     print("Load model successfully.")
     
     if method in ["LR","KNN","SVM","DT","NB","RF","ABC"]:  
