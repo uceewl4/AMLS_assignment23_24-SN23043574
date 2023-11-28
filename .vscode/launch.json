@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "name": "Python: 当前文件",
             "type": "python",
@@ -13,8 +14,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["--task","A",
-                    "--method","EnsembleNet",
-                    "--epochs","1"
+                    "--method","NB",
                 
                 ]
         }
