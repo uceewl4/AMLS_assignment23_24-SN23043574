@@ -19,7 +19,7 @@ class Baselines:
 
         self.method = method
         if method == "LR":  
-            self.model = LogisticRegression(multi_class="ovr")  # 效果更好
+            self.model = LogisticRegression(multi_class="ovr",C=0.001,solver="liblinear")  # 效果更好
             # self.model = OneVsRestClassifier(LogisticRegression())
         elif method == "KNN":  
             self.model = KNeighborsClassifier()
@@ -44,9 +44,9 @@ class Baselines:
         if gridSearch:  
             print(f"Start tuning(cross-validation) for {self.method}......")
             if self.method == "KNN":
-                params = [{"n_neighbors": [i for i in range(5,30,2)]}]
+                params = [{"n_neighbors": [i for i in range(1,12,1)]}]
             if self.method == "DT":
-                params = [{"max_leaf_nodes": [2, 5, 10, 15, 20]}]
+                params = [{"max_leaf_nodes": [i for i in range(25,60,5)]}]
             if self.method == "RF":
                 params = [{"n_estimators": [100, 120, 140, 160], "max_depth": [4, 6, 8, 10]}]
             if self.method == "ABC":

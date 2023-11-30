@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 # # print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
 # # Generally the ratio of train:val:test should be 3:1:1, here first use the dataset and no need for train test split
 
-# os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 # export CUDA_VISIBLE_DEVICES=1
 # 8.9.6, 12.0.1
 if tf.config.list_physical_devices('GPU'):

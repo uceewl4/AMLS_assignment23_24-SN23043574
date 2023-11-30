@@ -35,6 +35,7 @@ from B.models.KMeans import KMeans as B_KMeans
 import random
 from sklearn.decomposition import PCA
 from tensorboardX import SummaryWriter
+from sklearn.utils import shuffle
 
 
 def load_data(task, path, method, batch_size=None):
@@ -82,6 +83,11 @@ def load_data(task, path, method, batch_size=None):
             # sample_index_test = random.sample([i for i in range(Xtest.shape[0])]) 
             # Xtest = Xtest[sample_index_test,:]
             # ytest = np.array(ytest)[sample_index_test].tolist()
+
+            # try whether shuffle can improve accuracy
+            Xtrain, ytrain = shuffle(Xtrain,ytrain,random_state=42)
+            Xval, yval = shuffle(Xval, yval,random_state=42)
+            Xtest, ytest= shuffle(Xtest, ytest,random_state=42)
 
             # too much features, use PCA to reduce dimensionality
             pca = PCA(n_components=64)
@@ -216,7 +222,8 @@ def visual4tree(task, method, model):
     :param title: attributes used for splitting tree nodes
     """
     plt.figure(figsize=(100, 15))
-    class_names = ["pneumonia","non-pneumonia"] if task == "A" else []
+    class_names = ["pneumonia","non-pneumonia"] if task == "A" else ["ADI","BACK","DEB","LYM",\
+                        "MUC","MUS","NORM","STR","TUM"]
     tree.plot_tree(model, class_names=class_names, filled=True,
                        rounded=True,
                        fontsize=5)
