@@ -1,89 +1,280 @@
-# from medmnist import PneumoniaMNIST
-# from medmnist import PathMNIST
-import numpy as np
-import matplotlib.pyplot as plt
+# -*- encoding: utf-8 -*-
+'''
+@File    :   data_preprocessing.py
+@Time    :   2023/12/16 22:28:04
+@Programme :  MSc Integrated Machine Learning Systems (TMSIMLSSYS01)
+@Module : ELEC0134 Applied Machine Learning Systems
+@Author  :   Wenrui Li
+@SN :   23043574
+@Contact :   uceewl4@ucl.ac.uk
+@Desc    :   This file includes all data preprocessing procedures for task A. 
+        Notice that there are lots of comments here as trials and experiments for comparison. 
+        Most of the results are explained and visualized in the report.
+'''
+
+# here put the import lib
 import os
-import random
 import cv2
+import random
+import numpy as np
+from medmnist import PathMNIST
+import matplotlib.pyplot as plt
+from medmnist import PneumoniaMNIST  # cannot be used on gpu but can be used on my cpu, maybe because of package version
 from imblearn.over_sampling import SMOTE
+
 from utils import visual4label
 
+"""
+    In this project, two kinds of datasets are used. 
+    The first one is the npz format download from the website with provided PneumoniaMNIST and PathMNIST package.
+    The second one is the dataset saved as .png format with the commands running in terminal.
+    Detailed dataset deployment can be seen in README.md and Github link.
+"""
 # to download dataset in npz format from MeMNIST website, can use the sentence below
-# dataset1 = PneumoniaMNIST(split='train',download=True,root="Datasets/")
-
-# how to save the dataset as png figure and csv (reference from MeMNIST)
-# python -m medmnist save --flag=pneumoniamnist --postfix=png --folder=Datasets/ --root=Datasets/
-# python -m medmnist save --flag=pathmnist --postfix=png --folder=Datasets/ --root=Datasets/
 # dataset2 = PathMNIST(split='train',download=True,root="Datasets/")
 
-# # use for individual file for data preprocessing
-# # load the npz dataset and read it through numpy
-# data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pathmnist.npz')
-# print(f"Train data length: {len(data['train_images'])}")
-# for i in range(9):
-#     print(f"label {i}: {np.count_nonzero(data['train_labels'].flatten() == i)}")
-# print(f"Validation data length: {len(data['val_images'])}")
-# for i in range(9):
-#     print(f"label {i}: {np.count_nonzero(data['val_labels'].flatten() == i)}")
-# print(f"Test data length: {len(data['test_images'])}")
-# for i in range(9):
-#     print(f"label {i}: {np.count_nonzero(data['test_labels'].flatten() == i)}")
-# print(data['train_images'][0:2,:,:])
-# print(data['train_images'][0,:,:].shape)  # 28x28x3
+# how to save the dataset as png figure and csv (reference from MeMNIST)
+# python -m medmnist save --flag=pathmnist --postfix=png --folder=Datasets/ --root=Datasets/
 
-
-# # use for individual file for data preprocessing
-# # histogram equalization
-# # there are two ways for histogram equalization, one is use traditional, second is use CLAHE where CLAHE can help avoid 
-# # the loss of information due to over-brightness after histogram equalization, which is an adaptive histogram equalization.
-# path = 'Datasets/pathmnist'
-# raw_file=os.listdir(path)
-# os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True) 
-
+'''
+description: This function is used for histogram equalization and comparison of CLAHE method.
+param {*} path: path of raw dataset
+param {*} f: filename
+return {*}: original image, image after histogram equalization, image after CLAHE
+'''
 def histogram_equalization(path,f):
     img = cv2.imread(os.path.join(path,f))
-    equ = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-    equ[:, :, 2] = cv2.equalizeHist(equ[:, :, 2])
+    equ = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # convert into HSV channels for histogram equalization
+    equ[:, :, 2] = cv2.equalizeHist(equ[:, :, 2])  # only do equalization for channel V for contrastness
     equ = cv2.cvtColor(equ, cv2.COLOR_HSV2RGB)
 
     cl = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    # create a CLAHE object
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     cl[:, :, 2] = clahe.apply(cl[:, :, 2])
     cl = cv2.cvtColor(cl, cv2.COLOR_HSV2RGB)
 
     return img, equ, cl
 
+'''
+description: This function is used for Sobel operation.
+param {*} imgEqu: image after histogram equalization
+return {*}: image after Sobel operation
+'''
 def sobel(imgEqu):
-    SobelX = cv2.Sobel(imgEqu, cv2.CV_16S, 1, 0)  # 计算 x 轴方向
-    SobelY = cv2.Sobel(imgEqu, cv2.CV_16S, 0, 1)  # 计算 y 轴方向
-    absX = cv2.convertScaleAbs(SobelX)  # 转回 uint8
-    absY = cv2.convertScaleAbs(SobelY)  # 转回 uint8
-    SobelXY = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)  # 用绝对值近似平方根
+    SobelX = cv2.Sobel(imgEqu, cv2.CV_16S, 1, 0)  
+    SobelY = cv2.Sobel(imgEqu, cv2.CV_16S, 0, 1)  
+    absX = cv2.convertScaleAbs(SobelX)  
+    absY = cv2.convertScaleAbs(SobelY) 
+    SobelXY = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)  
     imgSobel = np.uint8(cv2.normalize(SobelXY, None, 0, 255, cv2.NORM_MINMAX))
 
     passivation = imgSobel*0.3 + imgEqu  # sobel add on image after histogram equalization
     imgPas = np.uint8(cv2.normalize(passivation, None, 0, 255, cv2.NORM_MINMAX))
     return imgPas
 
+'''
+description: This function is used for Gamma correction.
+param {*} imgPas: image after Sobel operation
+return {*}: image after Gamma correction
+'''
 def gammaCorrection(imgPas):
     epsilon = 1e-5  
     gamma = np.power(imgPas + epsilon, 0.5)
     imgGamma = np.uint8(cv2.normalize(gamma, None, 0, 255, cv2.NORM_MINMAX))
     return imgGamma
 
-## use for individual file for data preprocessing
-# for index,f in enumerate(raw_file):
-#         # print(os.path.join(path,f))
-#         if not os.path.isfile(os.path.join(path,f)):
-#             continue
-#         else:
-#             img, equ, cl = histogram_equalization(f)
-#             imgPas = sobel(equ)
-#             imgGamma = gammaCorrection(imgPas)
-#             # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-#             cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
+'''
+description: This function is used for data augmentation with rotation operation.
+return {*}:  image after rotation along center for 45 degree.
+'''
+# rotation
+def rotation(img):
+    h, w, c = img.shape
+    M = cv2.getRotationMatrix2D((w/2,h/2),45,1) 
+    imgRot = cv2.warpAffine(img,M,(w,h))  
+    return imgRot
+
+'''
+description: This function is used for data augmentation with width and height shifts.
+return {*}: shifted image
+'''
+# width shift & height shift  
+def shift(img):
+    h, w, c = img.shape
+    H = np.float32([[1,0,5],
+                    [0,1,5]])
+    imgShift = cv2.warpAffine(img,H,(w,h)) #需要图像、变换矩阵、变换后的大小
+    return imgShift
+
+'''
+description: This function is used for data augmentation with shearing.
+return {*}: image after shearing
+'''
+# shear
+def shear(img):
+    h, w, c = img.shape
+    pts1 = np.float32([[0, 0],[0, h-1],[w-1, 0]])
+    pts2 = np.float32([[0, 0],[5, h-5],[w-5, 5]])
+    M = cv2.getAffineTransform(pts1,pts2)
+    imgShear = cv2.warpAffine(img,M,(w,h))
+    return imgShear
+
+'''
+description: This function is used for data augmentation with zooming operation.
+return {*}: resized image with half of the width and height.
+'''
+# zoom
+def zoom(img):
+    h, w, c = img.shape
+    imgZoom = cv2.resize(img,(int(0.5*w),int(0.5*h)),interpolation=cv2.INTER_CUBIC)
+    keepSize = np.zeros((h,w,c),np.uint8)
+    keepSize[:int(0.5*h), :int(0.5*w), :] = imgZoom
+    return keepSize
+
+'''
+description: This function is used for data augmentation with horizontal flip.
+return {*}: flipped image
+'''
+# horizontal flip
+def horizontalFlip(img):
+    imgFlip = cv2.flip(img, 1) 
+    return imgFlip
+
+'''
+description:  This function is used for data augmentation with five techniques.
+param {*} data: npz data
+param {*} path: preprocessed data path
+param {*} pre_file: all preprocessed files
+param {*} clength: size of train, validation or test dataset
+param {*} label: specific label of 9 class
+param {*} mode: train, validation or test
+return {*}: new length of the whole dataset after data augmentation
+'''
+def data_augmentation(data, path, pre_file,clength, label, mode=None):
+
+    pre_file_phase = []
+
+    # specific dataset with specific label
+    for index,f in enumerate(pre_file):
+        if not os.path.isfile(os.path.join(path,f)):
+            continue
+        else:
+            if mode in f and (f.split("_")[1][0] == label):
+                    pre_file_phase.append(f)
+    
+    count = []
+    for i in range(9):
+        count.append(np.count_nonzero(data[f'{mode}_labels'].flatten() == i))
+    length_0 = count[int(label)]  # number of samples for current class
+    length_1 = max(count) # class with most samples in 9 types
+
+    
+    imgs = [] # augmented images
+    # sampling from minority class
+    flip_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
+    for i in flip_index:
+        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
+        imgFlip = horizontalFlip(img)
+        imgs.append(imgFlip)
+
+    shear_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
+    for i in shear_index:
+        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
+        imgShear = shear(img)
+        imgs.append(imgShear)
+    
+    zoom_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
+    for i in zoom_index:
+        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
+        imgZoom = zoom(img)
+        imgs.append(imgZoom)
+    
+    shift_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
+    for i in shift_index:
+        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
+        imgShift = shift(img)
+        imgs.append(imgShift)
+    
+    rot_index = random.sample([i for i in range(length_0)],int((length_1-length_0)-len(imgs)))  # all left
+    for i in rot_index:
+        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
+        imgRot = rotation(img)
+        imgs.append(imgRot)
+    
+    for index,i in enumerate(imgs):
+        cv2.imwrite(os.path.join(path,f'{mode}{clength+index}_{label}.png'),i)
+
+    return clength+len(imgs)
 
 
+'''
+description: This function is used for showing basic data descriptions,
+        like number of labels of each class, number of train/validation/test images.
+param {*} npz: whether download npz data, if you don't use provided backup project and want to check the project
+        from original dataset, please use the argument here. Detailed guideline is shown in README.md and Github link.
+return {*}: npz data
+'''
+def load_data_log4B(npz):
+    if npz == True:
+        download_dataset = PathMNIST(split='train',download=True,root="Datasets/")
+    data = np.load('Datasets/pathmnist.npz')
+
+    train_label = {f"label {i}":np.count_nonzero(data['train_labels'].flatten() == i) for i in range(9)}
+    val_label = {f"label {i}":np.count_nonzero(data['val_labels'].flatten() == i) for i in range(9)}
+    test_label = {f"label {i}":np.count_nonzero(data['test_labels'].flatten() == i) for i in range(9)}
+
+    print(f"Train data length: {len(data['train_images'])}")
+    print(train_label)
+    print(f"Validation data length: {len(data['val_images'])}")
+    print(val_label)
+    print(f"Test data length: {len(data['test_images'])}")
+    print(test_label)
+    visual4label("B",data)  # label distribution
+
+    return data
+
+'''
+description: This function is a conclusion for all data preprocessing procedures.
+param {*} raw_path: raw dataset path
+return {*}: size of train/validation/test dataset after all data preprocessing procedures.
+'''
+def data_preprocess4B(raw_path):
+    print("Start preprocessing data......")
+    data = load_data_log4B()
+    raw_file=os.listdir(raw_path)
+
+    # data preprocessing
+    os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True)
+    for index,f in enumerate(raw_file):
+        if not os.path.isfile(os.path.join(raw_path,f)):
+            continue
+        else:
+            img, equ, cl = histogram_equalization(raw_path, f)
+            imgPas = sobel(equ)
+            imgGamma = gammaCorrection(imgPas)
+            cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
+
+    # data augmentation
+    pre_path = 'Outputs/pathmnist/preprocessed_data'
+    pre_file=os.listdir(pre_path)
+    new_train_length = len(data["train_images"])
+    new_test_length = len(data["test_images"])
+    new_val_length = len(data["val_images"])
+    
+    for i in range(9):  # for each class type
+        new_train_length = data_augmentation(data, pre_path, pre_file,new_train_length,str(i),mode="train")
+        new_test_length = data_augmentation(data, pre_path, pre_file,new_test_length,str(i), mode="test")
+        new_val_length = data_augmentation(data, pre_path, pre_file,new_val_length, str(i), mode="val")
+
+    print("Finish preprocessing data.")
+    return new_train_length, new_test_length, new_val_length
+
+
+"""
+    Experiments for comparison of histogram equalization with single/double channel, CLAHE and RGB/HSV format.
+    This part is for experiment and will not be included in the committed code
+"""
 # experiment 1: histogram equalization
 # this part is for experiment and will not be included in the committed code
 # in this part, I compare the effect of building histogram equalization on single channel and multiple channel
@@ -143,7 +334,7 @@ def gammaCorrection(imgPas):
 # cv2.waitKey(0)
 
 
-# chans = cv2.split(img)    # 分离通道
+# chans = cv2.split(img)   
 # colors = ("b", "g", "r")
 # plt.subplot(1,2,1)
 # plt.title('calcHist before equalization')
@@ -157,7 +348,7 @@ def gammaCorrection(imgPas):
 #     plt.xlim([0, 256])
 
 # # the selected one
-# chans = cv2.split(equ3)    # 分离通道
+# chans = cv2.split(equ3)   
 # colors = ("b", "g", "r")
 # plt.subplot(1,2,2)
 # plt.title('calcHist after equalization')
@@ -173,6 +364,10 @@ def gammaCorrection(imgPas):
 # plt.show()
 # plt.savefig('Outputs/histogram_example_task B.png')
 
+"""
+    Experiments for comparison of CLAHE, Laplacian, Sobel operation, Gamma correction, etc.
+    This part is for experiment and will not be included in the committed code
+"""
 # experiment 2: selection for sobel/lapacian/gamma correction
 # result：sobel+gamma
 # laplacian may lead to lots of noise
@@ -237,122 +432,11 @@ def gammaCorrection(imgPas):
 # cv2.imshow("result",res)
 # cv2.waitKey(0)
 
-
-# data augmentation
-# rotation
-def rotation(img):
-    h, w, c = img.shape
-    M = cv2.getRotationMatrix2D((w/2,h/2),45,1) # 第一个参数旋转中心，第二个参数旋转角度，第三个参数：缩放比例
-    imgRot = cv2.warpAffine(img,M,(w,h))  # 第三个参数：变换后的图像大小
-    return imgRot
-
-# width shift & height shift  1/5
-def shift(img):
-    h, w, c = img.shape
-    H = np.float32([[1,0,5],
-                    [0,1,5]])
-    imgShift = cv2.warpAffine(img,H,(w,h)) #需要图像、变换矩阵、变换后的大小
-    return imgShift
-
-# shear
-def shear(img):
-    h, w, c = img.shape
-
-    pts1 = np.float32([[0, 0],[0, h-1],[w-1, 0]])
-    pts2 = np.float32([[0, 0],[5, h-5],[w-5, 5]])
-    M = cv2.getAffineTransform(pts1,pts2)
-    #第三个参数：变换后的图像大小
-    imgShear = cv2.warpAffine(img,M,(w,h))
-    return imgShear
-
-# zoom
-def zoom(img):
-    # img = cv2.imread('Outputs/preprocessed_data/test0_1.png')
-    h, w, c = img.shape
-    imgZoom = cv2.resize(img,(int(0.5*w),int(0.5*h)),interpolation=cv2.INTER_CUBIC)
-    keepSize = np.zeros((h,w,c),np.uint8)
-    keepSize[:int(0.5*h), :int(0.5*w), :] = imgZoom
-    return keepSize
-
-# horizontal flip
-def horizontalFlip(img):
-    # img = cv2.imread('Outputs/preprocessed_data/test0_1.png')
-    imgFlip = cv2.flip(img, 1) # 水平翻转
-    return imgFlip
-
-## use for individual file for data preprocessing
-# path = 'Outputs/pathmnist/preprocessed_data'
-# pre_file=os.listdir(path)
-
-
-# # for each label class, augment the data into the number of the majority one 
-# # where each class will divide 5 include 5 all augmentation methods
-
-
-def data_augmentation(data, path, pre_file,clength, label, mode=None):
-
-    pre_file_phase = []
-
-    for index,f in enumerate(pre_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(path,f)):
-            continue
-        else:
-            if mode in f and (f.split("_")[1][0] == label):
-                    pre_file_phase.append(f)
-    
-    count = []
-    for i in range(9):
-        count.append(np.count_nonzero(data[f'{mode}_labels'].flatten() == i))
-    length_0 = count[int(label)]
-    length_1 = max(count)
-
-    imgs = []
-
-    flip_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
-    for i in flip_index:
-        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
-        imgFlip = horizontalFlip(img)
-        imgs.append(imgFlip)
-
-    shear_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
-    for i in shear_index:
-        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
-        imgShear = shear(img)
-        imgs.append(imgShear)
-    
-    zoom_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
-    for i in zoom_index:
-        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
-        imgZoom = zoom(img)
-        imgs.append(imgZoom)
-    
-    shift_index = random.sample([i for i in range(length_0)],int((length_1-length_0)/5))
-    for i in shift_index:
-        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
-        imgShift = shift(img)
-        imgs.append(imgShift)
-    
-    rot_index = random.sample([i for i in range(length_0)],int((length_1-length_0)-len(imgs)))
-    for i in rot_index:
-        img = cv2.imread(os.path.join(path,f'{pre_file_phase[i]}'))
-        imgRot = rotation(img)
-        imgs.append(imgRot)
-    
-    for index,i in enumerate(imgs):
-        cv2.imwrite(os.path.join(path,f'{mode}{clength+index}_{label}.png'),i)
-
-    return clength+len(imgs)
-
-## use for individual file for data preprocessing
-# new_train_length = len(data["train_images"])
-# new_test_length = len(data["test_images"])
-# new_val_length = len(data["val_images"])
-# for i in range(9):
-#     new_train_length = data_augmentation(data, path, pre_file,new_train_length,str(i),mode="train")
-#     new_test_length = data_augmentation(data, path, pre_file,new_test_length,str(i), mode="test")
-#     new_val_length = data_augmentation(data, path, pre_file,new_val_length, str(i), mode="val")
-
+"""
+    This part is the implementation of SMOTE introduced in report. 
+    Since it's not used in the final processing procedures and just trials for comparison, 
+    it's commented and not included in committed code.
+"""
 # # smote
 # path = 'Datasets/pathmnist'
 # raw_file=os.listdir(path)
@@ -422,54 +506,3 @@ def data_augmentation(data, path, pre_file,clength, label, mode=None):
 
 # I don't think smote is a good method to balance the dataset, because the result of smote
 # includes figures with lots of noise, it's not so clear also, it also contains some strange color pixels
-
-# use for main.py
-def load_data_log4B():
-    data = np.load('Datasets/pathmnist.npz')
-
-    train_label = {f"label {i}":np.count_nonzero(data['train_labels'].flatten() == i) for i in range(9)}
-    val_label = {f"label {i}":np.count_nonzero(data['val_labels'].flatten() == i) for i in range(9)}
-    test_label = {f"label {i}":np.count_nonzero(data['test_labels'].flatten() == i) for i in range(9)}
-
-    print(f"Train data length: {len(data['train_images'])}")
-    print(train_label)
-    print(f"Validation data length: {len(data['val_images'])}")
-    print(val_label)
-    print(f"Test data length: {len(data['test_images'])}")
-    print(test_label)
-    # print(data['train_images'][0:2,:,:])
-    # print(data['train_images'][0,:,:].shape)  # 28x28x3
-    visual4label("B",data)
-
-    return data
-
-def data_preprocess4B(raw_path):
-    print("Start preprocessing data......")
-    data = load_data_log4B()
-    raw_file=os.listdir(raw_path)
-    os.makedirs('Outputs/pathmnist/preprocessed_data', exist_ok=True)
-    for index,f in enumerate(raw_file):
-        # print(os.path.join(path,f))
-        if not os.path.isfile(os.path.join(raw_path,f)):
-            continue
-        else:
-            img, equ, cl = histogram_equalization(raw_path, f)
-            imgPas = sobel(equ)
-            imgGamma = gammaCorrection(imgPas)
-            # res = np.hstack((img,equ,cl,imgPas,imgGamma))  # stacking images side-by-side
-            cv2.imwrite(os.path.join('Outputs/pathmnist/preprocessed_data',f'{f}'),imgGamma)
-
-    pre_path = 'Outputs/pathmnist/preprocessed_data'
-    pre_file=os.listdir(pre_path)
-
-    new_train_length = len(data["train_images"])
-    new_test_length = len(data["test_images"])
-    new_val_length = len(data["val_images"])
-    
-    for i in range(9):
-        new_train_length = data_augmentation(data, pre_path, pre_file,new_train_length,str(i),mode="train")
-        new_test_length = data_augmentation(data, pre_path, pre_file,new_test_length,str(i), mode="test")
-        new_val_length = data_augmentation(data, pre_path, pre_file,new_val_length, str(i), mode="val")
-
-    print("Finish preprocessing data.")
-    return new_train_length, new_test_length, new_val_length

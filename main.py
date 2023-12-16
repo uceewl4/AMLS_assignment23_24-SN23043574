@@ -7,36 +7,28 @@
 @Author  :   Wenrui Li
 @SN :   23043574
 @Contact :   uceewl4@ucl.ac.uk
-@Desc    :   None
+@Desc    :   This is the main file where the whole project starts to run.
 '''
 
 # here put the import lib
-
-
 import os
-import cv2
-import numpy as np
 import argparse
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from utils import get_metrics, hyperpara_selection, visual4cm, visual4auc, visual4tree, visual4KMeans
+import warnings
+import tensorflow as tf
+from utils import load_data, load_model, get_metrics, hyperpara_selection, visual4cm, \
+    visual4auc, visual4tree, visual4KMeans
 from A.data_preprocessing import data_preprocess4A, load_data_log4A
 from B.data_preprocessing import data_preprocess4B, load_data_log4B
-from utils import load_data, load_model
 
-
-import tensorflow as tf
-import warnings
 warnings.filterwarnings("ignore")
 
-# # data = np.load('/Users/anlly/Desktop/ucl/Applied Machine Learning Systems-I/AMLS assignment/AMLS_assignment23_24-SN23043574/Datasets/pneumoniamnist.npz')
-# # print(f"Train data length: {len(data['train_images'])}, label 0: {np.count_nonzero(data['train_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['train_labels'].flatten() == 1)}")
-# # print(f"Validation data length: {len(data['val_images'])}, label 0: {np.count_nonzero(data['val_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['val_labels'].flatten() == 1)}")                                                               
-# # print(f"Test data length: {len(data['test_images'])}, label 0: {np.count_nonzero(data['test_labels'].flatten() == 0)}, label 1: {np.count_nonzero(data['test_labels'].flatten() == 1)}")
-# # Generally the ratio of train:val:test should be 3:1:1, here first use the dataset and no need for train test split
-
+"""
+    This is the part for CPU and GPU setting. Notice that part of the project 
+    code is run on UCL server with provided GPU resources, especially for NNs 
+    and pretrained models.
+"""
 os.environ['CUDA_VISIBLE_DEVICES']='0'
-# export CUDA_VISIBLE_DEVICES=1
-# 8.9.6, 12.0.1
+# export CUDA_VISIBLE_DEVICES=1  # used for setting specific GPU in terminal
 if tf.config.list_physical_devices('GPU'):
     print('Use GPU of UCL server: london.ee.ucl.ac.uk')
     physical_devices = tf.config.list_physical_devices('GPU')
@@ -48,19 +40,34 @@ else:
 
 if __name__ == '__main__':
 
+    """
+        Notice that you can specify certain task and model for experiment by passing in
+        arguments. Guidelines for running are provided in README.md and Github link.
+    """
     # argument processing
     parser = argparse.ArgumentParser(description='Argparse')
     parser.add_argument('--task',type=str, default = "A",required=True,help="")
-    parser.add_argument('--method',type=str, default="", required=True,help='age of the programmer')
-    parser.add_argument('--batch_size',type=int, default=32,help='age of the programmer')
-    parser.add_argument('--epochs',type=int, default=10,help='age of the programmer')
-    parser.add_argument('--lr', type=float, default=0.001, help="preprocess the data or use the file provided")
-    parser.add_argument('--pre_data', type=bool, default=False, help="preprocess the data or use the file provided")
-    parser.add_argument('--multilabel', type=bool, default=False, help="preprocess the data or use the file provided")
+    parser.add_argument('--method',type=str, default="LR", required=True,help='model chosen')
+    parser.add_argument('--batch_size',type=int, default=32, help='batch size of NNs like MLP and CNN')
+    parser.add_argument('--epochs',type=int, default=10, help='epochs of NNs')
+    parser.add_argument('--lr', type=float, default=0.001, help="learning rate of NNs")
+    parser.add_argument('--pre_data', type=bool, default=False, help="whether preprocess the dataset")
+    # notice that preprocessing the data may take a long time especially for task B, 
+    # codes with preprocessed data is provided in the backup project, you can replicate directly to here.
+    # or run the backup project (almost the same with this one just with dataset provided).
+    parser.add_argument('--npz', type=bool, default=False, help="whether download .npz")
+    # notice that two files needed to download for the project, one need terminal command, 
+    # the other need to specify this argument as True for downloading .npz file.
+    # my suggestion is to use my "Datasets" directory directly which is provided in the backup project,
+    # but this argument is provided as well if you want to check code validation.
+    # Simply run backup project will be better if you just want to test model implementation, where both raw
+    # dataset and preprocessed dataset already exist for time consideration.
+    parser.add_argument('--multilabel', type=bool, default=False, help="whether consider multilabel setting for task B")
     args = parser.parse_args()
     task = args.task
     method = args.method
     pre_data = args.pre_data
+    npz = args.npz
     print(f"Method: {method} Task: {task} Multilabel: {args.multilabel}.") if task == "B" and method in ["MLP","CNN"] else print(f"Method: {method} Task: {task}.")
 
     if task == "A":
@@ -68,24 +75,21 @@ if __name__ == '__main__':
     else:
         raw_path = "Datasets/pathmnist"
      
-    # data processing (haven't decide how to present yet)
+    # data processing 
     if pre_data:
         data_preprocess4A(raw_path) if task == "A" else data_preprocess4B(raw_path)
     else:
-        load_data_log4A() if task == "A" else load_data_log4B()
+        load_data_log4A(npz) if task == "A" else load_data_log4B(npz)
     
     # load data
     print("Start loading data......")
     if task == "A":
         pre_path = 'Outputs/pneumoniamnist/preprocessed_data'
     else:
-        pre_path = 'Outputs/pathmnist/preprocessed_data'
-        
+        pre_path = 'Outputs/pathmnist/preprocessed_data' 
     if ("LR" in method) or ("KNN" in method) or ("SVM" in method) or ("DT" in method) \
         or ("NB" in method) or ("RF" in method) or ("ABC" in method) or ("KMeans" in method):
         Xtrain, ytrain, Xtest, ytest, Xval, yval = load_data(task,pre_path,method)
-        # A SVM 6988 784   densenet 6988 28 28 3
-        # B  2352              densenet 28,28,3
     elif method in ["CNN","MLP","EnsembleNet"]:
         train_ds, val_ds, test_ds = load_data(task,pre_path,method,batch_size=args.batch_size)
     print("Load data successfully.")
@@ -99,6 +103,10 @@ if __name__ == '__main__':
         model = load_model(task, method)
     print("Load model successfully.")
     
+    """
+        This part includes all training, validation and testing process with encapsulated functions.
+        Detailed process of each method can be seen in corresponding classes.
+    """
     if method in ["LR","KNN","SVM","DT","NB","RF","ABC"]:  
         if method in ["KNN","DT","RF","ABC"]:
             cv_results_ = model.train(Xtrain, ytrain, Xval, yval, gridSearch=True)
@@ -132,12 +140,16 @@ if __name__ == '__main__':
         model.train(Xtrain, ytrain)
         pred_train, pred_val, pred_test = model.test(Xtrain, Xval, Xtest)
     
-    # visualization
+    # metrics and visualization
+    # hyperparameters selection
     if (("KNN" in method) or ("DT" in method) or ("RF" in method) or ("ABC" in method)):
         hyperpara_selection(task, method, cv_results_["mean_test_score"])
-    if "DT" in method:
+    
+    # decision tree
+    if "DT" in method:  
         visual4tree(task,method,model.model) if method == "DT" else visual4tree(task,method,model.clf)
 
+    # confusion matrix, auc roc curve, metrics calculation
     if method != "KMeans":
         res = {"train_res":get_metrics(task, ytrain, pred_train),
                "val_res":get_metrics(task, yval, pred_val),
@@ -147,7 +159,7 @@ if __name__ == '__main__':
         visual4cm(task, method, ytrain, yval, ytest, pred_train, pred_val, pred_test)
         if task == "A":
             visual4auc(task, method, ytrain, yval, ytest, pred_train, pred_val, pred_test)
-    else:
+    else: # clustering 3D figure
         wrap_data = {"train":(Xtrain,ytrain), "val":(Xval,yval), "test": (Xtest,ytest),
             "train_clustering":(Xtrain, pred_train),
             "val_clustering":(Xval, pred_val),
