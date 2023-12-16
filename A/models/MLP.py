@@ -8,7 +8,7 @@ from tensorboardX import SummaryWriter
 class MLP(Model):
   def __init__(self, task,method,lr=0.001):
     super(MLP, self).__init__()
-    self.flatten = Flatten(input_shape=(28, 28, 3))
+    self.flatten = Flatten(input_shape=(28, 28, 3))  # task A input still 28*28*3
     self.d1 = Dense(4096, activation='relu')
     self.d2 = Dense(4096, activation='relu')
     self.do1 = Dropout(0.2)

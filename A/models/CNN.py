@@ -10,7 +10,7 @@ class CNN(Model):
     super(CNN, self).__init__()
     # different to MLP, no need to make the image input in a flattened way, can just input image with batches and calculate with kernel
     # but for MLP we need to first flatten the image because it's not a kernel calculation
-    self.c1 = Conv2D(32, 3, padding='same', activation='relu', input_shape=(28,28,1))
+    self.c1 = Conv2D(32, 3, padding='same', activation='relu', input_shape=(28,28,3))
     self.b1 = BatchNormalization()
     self.p1 = MaxPooling2D()
     self.c2 = Conv2D(64, 3, padding='same', activation='relu')

@@ -6,6 +6,7 @@
     "configurations": [
 
 
+
         {
             "name": "Python: 当前文件",
             "type": "python",
@@ -14,7 +15,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["--task","A",
-                    "--method","NB",
+                    "--method","CNN",
                 
                 ]
         }
