@@ -6,7 +6,7 @@ This is the final assignment for 23/24 AMLS ELEC0134 Msc IMLS SN23043574. Notice
 **Module**: ELEC0134 Applied Machine Learning Systems \
 **Project name:** AMLS I final assignment \
 **Scope:** Machine Learning and Deep Learning, Research, Simulation \
-**Github:** https://github.com/uceewl4/AMLS_assignment23_24-SN23043574.git
+**Github:** https://github.com/uceewl4/AMLS_assignment23_24-SN23043574.git (The private respository will become public once the deadline is passed. You can also download the project through Google Drive link provided in the report.)
 
 ## Description
 ### 1. Project Structure 
