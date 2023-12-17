@@ -46,8 +46,8 @@ if __name__ == '__main__':
     """
     # argument processing
     parser = argparse.ArgumentParser(description='Argparse')
-    parser.add_argument('--task',type=str, default = "A",required=True,help="")
-    parser.add_argument('--method',type=str, default="LR", required=True,help='model chosen')
+    parser.add_argument('--task',type=str, default = "A",help="task A or B")
+    parser.add_argument('--method',type=str, default="LR",help='model chosen')
     parser.add_argument('--batch_size',type=int, default=32, help='batch size of NNs like MLP and CNN')
     parser.add_argument('--epochs',type=int, default=10, help='epochs of NNs')
     parser.add_argument('--lr', type=float, default=0.001, help="learning rate of NNs")
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     method = args.method
     pre_data = args.pre_data
     npz = args.npz
+    print(npz)
     print(f"Method: {method} Task: {task} Multilabel: {args.multilabel}.") if task == "B" and method in ["MLP","CNN"] else print(f"Method: {method} Task: {task}.")
 
     if task == "A":

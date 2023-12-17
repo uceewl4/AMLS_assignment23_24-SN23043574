@@ -8,7 +8,7 @@
 @SN :   23043574
 @Contact :   uceewl4@ucl.ac.uk
 @Desc    :   This file is used for DDI launch and page design. It includes all modules and implementation of the
-    web page system. Notice that it is separate from main.py and can be launched by "python interface.py". 
+    web page system. Notice that it is separate from main.py and can be launched by "streamlit run interface.py". 
     It's not part of main.py codes and guidelines are provided in README.md and Github link.
     Notice that you can run this streamlit application only when you first got the dataset stored and preprocessed.
 '''
@@ -43,15 +43,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-"""
-    There are four main columns in the sidebar: 
-    1. Welcome section is functioned as guidelines for new users to learn how to use this system. 
-    2. Diagnosis section is the critical part where two kinds of digital diagnosis are realized as Pneumonia diagnosis and CRC diagnosis
-    3. Feedback section for radiologists to analyze digital diagnostic result and give consistent advice. 
-        It also includes a survey template for patients to provide additional health condition information like frequency of coughing, 
-        weight loss, etc., for diagnosis integrity. The diagnostic advice will be sent automatically to patients' mailbox with smtplib SMTP. 
-    4. Help section: users can send suggestions and complaints for DDI system through automatical emails.
-"""
+
+#     There are four main columns in the sidebar: 
+#     1. Welcome section is functioned as guidelines for new users to learn how to use this system. 
+#     2. Diagnosis section is the critical part where two kinds of digital diagnosis are realized as Pneumonia diagnosis and CRC diagnosis
+#     3. Feedback section for radiologists to analyze digital diagnostic result and give consistent advice. 
+#         It also includes a survey template for patients to provide additional health condition information like frequency of coughing, 
+#         weight loss, etc., for diagnosis integrity. The diagnostic advice will be sent automatically to patients' mailbox with smtplib SMTP. 
+#     4. Help section: users can send suggestions and complaints for DDI system through automatical emails.
+# 
 with st.sidebar:  # sidebar of the system
     choose = option_menu("DDI", ["Welcome", "Diagnosis", "Feedback", "Help"],
                             menu_icon="hospital",
@@ -136,7 +136,7 @@ elif choose == "Diagnosis":
                     # model prediction
                     print(f"Method: SVM Task: A.")
                     pre_path = 'Outputs/pneumoniamnist/preprocessed_data'
-                    load_data_log4A() 
+                    # load_data_log4A(npz) 
                     print("Start loading data......")
                     Xtrain, ytrain, Xtest, ytest, Xval, yval = load_data("A",pre_path,"SVM")
                     print("Load data successfully.")
@@ -183,7 +183,7 @@ elif choose == "Diagnosis":
                     # model prediction
                     print(f"Method: NB Task B.")
                     pre_path = 'Outputs/pathmnist/preprocessed_data'
-                    load_data_log4B() 
+                    # load_data_log4B() 
                     print("Start loading data......")
                     Xtrain, ytrain, Xtest, ytest, Xval, yval = load_data("B",pre_path,"NB")
                     single_img = np.array(Xtest[int(uploaded_image.name.split("_")[0][4:]),:]).reshape(1,64)

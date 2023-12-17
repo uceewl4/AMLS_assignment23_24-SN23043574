@@ -35,7 +35,7 @@ from utils import visual4label
 # dataset1 = PneumoniaMNIST(split='train',download=True,root="Datasets/")
 
 # # how to save the dataset as png figure and csv (reference from MeMNIST)
-# python -m medmnist save --flag=pathmnist --postfix=png --folder=Datasets/ --root=Datasets/  
+# python -m medmnist save --flag=pneumoniamnist --postfix=png --folder=Datasets/ --root=Datasets/  
 
 '''
 description: This function is used for histogram equalization and comparison of CLAHE method.
