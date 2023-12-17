@@ -1,7 +1,7 @@
 # AMLS_assignment23_24-SN23043574
 This is the final assignment for 23/24 AMLS ELEC0134 Msc IMLS SN23043574. Notice that there is another backup project and some related materials under the same url. Their usage is illustrated in following sections.
 >**Time:** 07/11/2023-12/01/2024 \
-**Author:** Wenrui Li 23043574 \
+**Author:** 23043574 \
 **Programme:** Msc Integrated Machine Learning Systems (TMSIMLSSYS01) \
 **Module**: ELEC0134 Applied Machine Learning Systems \
 **Project name:** AMLS I final assignment \
