@@ -54,7 +54,7 @@ This is the final assignment for 23/24 AMLS ELEC0134 Msc IMLS SN23043574. Notice
     - VGG16.py: pre-trained network with concatenated classifier of VGG16
     - KMeans.py: model of K-Means clustering method
 
-- **Outputs**: all outputs of the project including preprocessed dataset, metrics and visualization from modelling experiments and trials. <font color=#008000>*Notice that if you don't use backup project, this outputs directory will not appear initially when you clone the project. It will only be generated after running the code as code outputs.*</font>
+- **Outputs**: all outputs of the project including preprocessed dataset, metrics and visualization from modelling experiments and trials. <u><font color=#008000>*Notice that if you don't use backup project, this outputs directory will not appear initially when you clone the project. It will only be generated after running the code as code outputs.*</font></u>
   - **images:** generated images of modelling experiments and trials
     - **clustering:** 3D image for K-Means clustering
     - **confusion_matrix:** confusion matrix for experiments
