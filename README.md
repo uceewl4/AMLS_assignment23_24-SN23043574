@@ -195,8 +195,7 @@ This is the final assignment for 23/24 AMLS ELEC0134 Msc IMLS SN23043574. Notice
 ## Requirements
   Original developing environment:
   - Visual Studio Code 1.85.0 (Universal)
-  - **CPU platform:** Python 3.11.5.final.0 and Anaconda virtual environment for conda 23.7.4. You can check all requirements in requirements.txt and environment in environment.yml. Since the version of different environment may not be compatible, if you cannot install this environment
-  or fail to run it, please refer to the video demo I recorded in the zip file.
+  - **CPU platform:** Python 3.11.5.final.0 and Anaconda virtual environment for conda 23.7.4. You can check all requirements in requirements.txt and environment in environment.yml. 
   - **GPU plaform:** UCL server: london.ee.ucl.ac.uk with Python 3.11.5.final.0, Anaconda virtual environment for conda 23.7.4 and cuda version 12.2.
   - System deisgn: Streamlit package in Python (https://docs.streamlit.io/)
   - Notice that some system functions like *Feedback* and *Help* need to ensure internet connection for email.
@@ -206,7 +205,7 @@ This is the final assignment for 23/24 AMLS ELEC0134 Msc IMLS SN23043574. Notice
 - Step 2: Install requirement packages for the environment: 
   <p><code>pip install -r requirements.txt</code></p>
 
-Two projects are provided under this Github link. The first one is a project with only models but not provided dataset. The second one is a backup project with both raw dataset and preprocessed dataset provided. Other materials are also provided for video demonstration, latex report zip and pdf, experimental result and literature review.
+Two projects are provided under this Github link. The first one is a project with only models but not provided dataset. The second one is a backup project with both raw dataset and preprocessed dataset provided. 
 
 **<font color=red>**Notice:** There are no difference in other codes of these two datasets.If you want to check code validation for the dataset part, you can use the first one. However, it's suggested to use backup project if you want to check model implementation because it may take long time for you to generate preprocessed data due to the large size of task A and B.</font>**
 
@@ -230,7 +229,7 @@ Two projects are provided under this Github link. The first one is a project wit
 
     --npz: whether download npz data, default False. **<font color=red>only used for the other project where you don't have any data and want to check the process of data preprocessing.</font>**
 
-    --multilabels: whether set multilabels scenario, default False.  **only used for task B MLP and CNN.**
+    --multilabel: whether set multilabels scenario, default False.  **only used for task B MLP and CNN.**
 
   <p><code>python main.py --task A --method SVM</code></p>
   <p><code>python main.py --task A --method MLP --batch_size 32 --epochs 10 --lr 0.001</code></p>
@@ -239,7 +238,6 @@ Two projects are provided under this Github link. The first one is a project wit
 
         task A: LR, SVM, NB, (if you want to try MLP/CNN around 30-60min on GPU)
         task B: LR, NB, MLP(can set a small epoch to see performance)
-  **<font color=#008000> You can also try some small epochs or see my video to check implementation.</font>**
 
 **For running the project to check dataset:**
 - Step 3: There are two datastes for each task you need to download or replicate from backup project. The first one is through command lines in terminal:
@@ -273,10 +271,8 @@ Two projects are provided under this Github link. The first one is a project wit
 
   **<font color=#008000> Notice: Due to large size of dataset and model nature, some model may be extremely slow to run epecially for task B. It can take several hours to run customized networks and other pretrained models with GPU. So it's suggested that if you want to check the model implementation on CPU, try some fast model to see their performance as recommended:</font>**
 
-        task A: LR, SVM, NB, (if you want to try MLP/CNN around 30-60min on GPU)
-        task B: LR, NB, MLP(can set a small epoch to see performance)
-
-  **<font color=#008000>You can also try some small epochs or see my video to check implementation. </font>**
+        task A: LR, SVM, NB, DenseNet201_LR, KMeans, etc. (You can try MLP/CNN around 30-60min on GPU or can set a small epoch on CPU to see NNs performance. Apart from tree family, most of task A models are quick.)
+        task B: NB, LR, MLP, KMeans, etc.(It will take you some time to load dataset of task B. For MLP/CNN you can set a small epoch to see performance)
 
 - To run DDI system:
   <p><code>streamlit run interface.py</code></p>
