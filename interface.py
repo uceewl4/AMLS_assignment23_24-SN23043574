@@ -64,9 +64,10 @@ with st.sidebar:  # sidebar of the system
 if choose == "Welcome":  # instruction page
     st.title("🎊 Welcome to DDI!")
     st.write(
-        f"Hi, welcome to the digital system of Disease Diagnosis with Image (DDI). This is the instruction page for DDI, a digital system supported by AI solutions. New patients of this app can refer to the "
-        "following sections as guidelines. 👇
-    ")
+        "Hi, welcome to the digital system of Disease Diagnosis with Image (DDI). This is the instruction page for DDI"
+        + ", a digital system supported by AI solutions. New patients of this app can refer to the "
+        + "following sections as guidelines. 👇"
+    )
 
     st.header("Diagnosis")
     with st.expander("See details", expanded=True):
@@ -74,16 +75,18 @@ if choose == "Welcome":  # instruction page
             "This is where you can make digital diagnosis for possible diseases with images."
         )
         st.subheader(
-            "👉 Want to diagnose for pneumonia? -- See our *Pneumonia* section.
-        ")
+            "👉 Want to diagnose for pneumonia? " " -- See our *Pneumonia* section."
+        )
         st.write(
-            "• The **Pneumonia** takes your uploaded *:blue[chest X-ray slides]* for diagnosis. Please ensure that your file format is valid and clear "
-            "to guarantee accurate result."
+            "• The **Pneumonia** takes your uploaded *:blue[chest X-ray slides]* for diagnosis. "
+            + "Please ensure that your file format is valid and clear "
+            + "to guarantee accurate result."
         )
 
         st.subheader(
-            "👉 Feel hard to classify for hematoxylin & eosin stained histological tissue images? -- *CRC* helps.
-        ")
+            "👉 Feel hard to classify for hematoxylin & eosin stained "
+            + "histological tissue images? -- *CRC* helps."
+        )
         st.write("• Upload your tissue image.")
         st.write(
             "• Make digital classification for *:blue[9 types]* of tissue (ADI, BACK, DEB, etc)."
@@ -96,28 +99,29 @@ if choose == "Welcome":  # instruction page
             "This is the place for medical advice and additional diagnostic info survey."
         )
         st.subheader(
-            "👉 Want to check medical advice from specialists? -- *Advice* helps.
-        ")
+            "👉 Want to check medical advice from specialists?" "-- *Advice* helps."
+        )
         st.write(
             "• **Specialists for each disease** can leave medical advice for patients accompanied with AI diagnosis."
         )
         st.write(
-            "• Your medical advice will be sent as *:blue[automatic system email]*. 📬
-        ")
+            "• Your medical advice will be sent as"
+            + " *:blue[automatic system email]*. 📬"
+        )
 
         st.subheader(
-            "🙌 Additional diagnostic survey for comprehensive knowledge of your condition!
-        ")
+            "🙌 Additional diagnostic survey for comprehensive knowledge of your condition!"
+        )
         st.write(
-            "• We appreciate your time for providing additional infomation on your recent health condition, "
-            "which can give more insights for specialists to diagnose."
+            "• We appreciate your time for providing additional infomation on your recent"
+            + " health condition, which can give more insights for specialists to diagnose."
         )
 
     st.header("Help")
     with st.expander("See details", expanded=True):
         st.write(
             "Contact **DDI Developer Team** if you have any problems or suggestions. Glad to see your "
-            "contribution."
+            + "contribution."
         )
 
 # diagnosis
@@ -186,9 +190,9 @@ elif choose == "Diagnosis":
                     )
 
                     if pred_test[0] == "1":
-                        st.error("Your diagnosis result is: penumonia.")
+                        st.error("Your diagnosis result is: pneumonia.")
                     else:
-                        st.success("Your diagnosis result is: non-penumonia.")
+                        st.success("Your diagnosis result is: non-pneumonia.")
 
                 st.button("Rerun")
 
